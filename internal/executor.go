@@ -52,32 +52,29 @@ type ExecuteArgs struct {
 }
 
 // Execute executes a dasel command.
-func (e *Executor) Execute(args ExecuteArgs) (string, error) {
+func (e *Executor) Execute(args ExecuteArgs) (result string, daselArgs []string, daselErr error, err error) {
 	versionOpts, ok := e.versions[args.Version]
 	if !ok {
-		return "", ErrInvalidVersion
+		return "", nil, nil, ErrInvalidVersion
 	}
 
-	daselArgs := append([]string{
+	daselArgs = append([]string{
 		"-p", args.FileType,
 	}, args.Args...)
-
-	fmt.Println(daselArgs)
 
 	echoCmd := exec.Command("echo", args.File)
 	daselCmd := exec.Command(versionOpts.Path, daselArgs...)
 
 	reader, writer, err := os.Pipe()
 	if err != nil {
-		return "", fmt.Errorf("could not get os pipe: %w", err)
+		return "", daselArgs, nil, fmt.Errorf("could not get os pipe: %w", err)
 	}
 
 	echoCmd.Stdout = writer
 	daselCmd.Stdin = reader
 
 	if err := echoCmd.Start(); err != nil {
-		fmt.Println("here1", err)
-		return "", fmt.Errorf("could not start echo: %w", err)
+		return "", daselArgs, nil, fmt.Errorf("could not start echo: %w", err)
 	}
 
 	errCh := make(chan error)
@@ -97,18 +94,15 @@ func (e *Executor) Execute(args ExecuteArgs) (string, error) {
 	select {
 	case err, ok := <-errCh:
 		if ok {
-			fmt.Println("here", err)
-			return "", err
+			return "", daselArgs, nil, err
 		}
 	}
 
 	out, err := daselCmd.CombinedOutput()
 	if err != nil {
-		fmt.Println("here2", err, string(out))
-		return "", fmt.Errorf("could not get dasel output: %w", err)
+		daselErr := fmt.Errorf("%w: %s", err, string(out))
+		return "", daselArgs, daselErr, nil
 	}
 
-	fmt.Println("got output", string(out))
-
-	return string(out), nil
+	return string(out), daselArgs, nil, nil
 }

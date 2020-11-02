@@ -15,6 +15,7 @@ type ExecuteRequest struct {
 
 type ExecuteResponse struct {
 	Data string `json:"data"`
+	Args []string `json:"args"`
 }
 
 func executeHTTPHandler(executor *Executor) func(rw http.ResponseWriter, r *http.Request) {
@@ -30,7 +31,7 @@ func executeHTTPHandler(executor *Executor) func(rw http.ResponseWriter, r *http
 			return
 		}
 
-		out, err := executor.Execute(ExecuteArgs{
+		out, daselArgs, daselErr, err := executor.Execute(ExecuteArgs{
 			Version:  req.Version,
 			FileType: req.FileType,
 			File:     req.File,
@@ -41,6 +42,17 @@ func executeHTTPHandler(executor *Executor) func(rw http.ResponseWriter, r *http
 			return
 		}
 
-		writeJSON(rw, ExecuteResponse{Data: out}, http.StatusOK)
+		if daselErr != nil {
+			writeJSON(rw, ExecuteResponse{
+				Data: daselErr.Error(),
+				Args: daselArgs,
+			}, http.StatusBadRequest)
+			return
+		}
+
+		writeJSON(rw, ExecuteResponse{
+			Data: out,
+			Args: daselArgs,
+		}, http.StatusOK)
 	}
 }
