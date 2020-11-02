@@ -1,0 +1,33 @@
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+name: Build
+jobs:
+  publish:
+    strategy:
+      matrix:
+        go-version: [1.15.x]
+        os:
+          - ubuntu-latest
+    name: Docker Build
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2-beta
+        with:
+          go-version: '^1.15.0' # The Go version to download (if necessary) and use.
+      - name: Set env
+        run: echo ::set-env name=RELEASE_VERSION::${GITHUB_REF:10}
+      - name: Build docker image
+        run: docker build -t tomwright/daselplayground/daselplayground:latest .
+      - name: Docker login
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u TomWright --password-stdin
+      - name: Docker tag latest
+        run: docker tag tomwright/daselplayground/daselplayground:latest docker.pkg.github.com/tomwright/daselplayground/daselplayground:latest
+      - name: Docker tag release
+        run: docker tag tomwright/daselplayground/daselplayground:latest docker.pkg.github.com/tomwright/daselplayground/daselplayground:${{ env.RELEASE_VERSION }}
+      - name: Docker push latest
+        run: docker push docker.pkg.github.com/tomwright/daselplayground/daselplayground:latest
+      - name: Docker push release
+        run: docker push docker.pkg.github.com/tomwright/daselplayground/daselplayground:${{ env.RELEASE_VERSION }}
