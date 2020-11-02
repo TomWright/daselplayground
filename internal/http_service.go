@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"log"
 	"net/http"
 )
 
@@ -31,6 +32,8 @@ func (s *httpService) Start() error {
 		Addr:    s.listenAddress,
 		Handler: r,
 	}
+
+	log.Printf("http server listening on %s", s.listenAddress)
 
 	if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		if err != http.ErrServerClosed {

@@ -4,17 +4,22 @@ import (
 	"context"
 	"github.com/tomwright/daselplayground/internal"
 	"github.com/tomwright/lifetime"
+	"os"
+	"strings"
 )
 
 func main() {
 	executor := internal.NewExecutor()
 
-	executor.RegisterVersion(&internal.VersionOpts{
-		Version: "v1.1.0",
-		Path:    "dasel",
-	})
+	for _, build := range strings.Split(os.Getenv("DASEL_BUILDS"), ",") {
+		split := strings.Split(build, ":")
+		executor.RegisterVersion(&internal.VersionOpts{
+			Version: split[0],
+			Path:    split[1],
+		})
+	}
 
-	httpService := internal.NewHTTPService(":8090", executor)
+	httpService := internal.NewHTTPService(os.Getenv("HTTP_LISTEN_ADDRESS"), executor)
 
 	lt := lifetime.New(context.Background()).Init()
 
