@@ -20,6 +20,11 @@ type ExecuteResponse struct {
 
 func executeHTTPHandler(executor *Executor) func(rw http.ResponseWriter, r *http.Request) {
 	return func(rw http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			rw.WriteHeader(http.StatusNotFound)
+			return
+		}
+
 		bytes, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			writeErr(rw, err, http.StatusBadRequest)
