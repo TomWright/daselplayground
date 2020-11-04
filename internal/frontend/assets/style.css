@@ -1,0 +1,19 @@
+#file-type-wrapper, #file-wrapper, #args-wrapper {
+    display: block;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+#file {
+    display: block;
+    width: 100%;
+    height: 100px;
+}
+
+#about {
+    display: none;
+}
+
+.arg {
+    display: inline-block;
+}

@@ -10,7 +10,7 @@ import (
 func NewHTTPService(listenAddress string, executor *Executor) *httpService {
 	return &httpService{
 		listenAddress: listenAddress,
-		executor: executor,
+		executor:      executor,
 	}
 }
 
@@ -18,15 +18,20 @@ func NewHTTPService(listenAddress string, executor *Executor) *httpService {
 // that will generate diagrams.
 type httpService struct {
 	listenAddress string
-	httpServer *http.Server
-	executor  *Executor
+	httpServer    *http.Server
+	executor      *Executor
 }
 
 // Start starts the HTTP server.
 func (s *httpService) Start() error {
 	r := http.NewServeMux()
+	r.HandleFunc("/", editHTTPHandler(s.executor))
+	r.HandleFunc(editPrefix, editHTTPHandler(s.executor))
 	r.HandleFunc("/versions", versionsHTTPHandler(s.executor))
 	r.HandleFunc("/execute", executeHTTPHandler(s.executor))
+
+	fs := http.FileServer(http.Dir("./internal/frontend/assets"))
+	r.Handle("/assets/", http.StripPrefix("/assets/", fs))
 
 	s.httpServer = &http.Server{
 		Addr:    s.listenAddress,

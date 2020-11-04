@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>{{ .Title }}</title>
+    <link rel="stylesheet" href="/assets/style.css">
+    <script src="/assets/jquery.1.8.2.min.js"></script>
+    <script src="/assets/playground.js"></script>
+</head>
+<body itemscope itemtype="http://schema.org/CreativeWork">
+
+<div id="banner">
+    <div id="head" itemprop="name">{{ .Title }}</div>
+    <div id="controls">
+        <input type="button" value="Run" id="run" class="trigger-run">
+        <input type="button" value="Share" id="share" class="trigger-share">
+        <select id="version">
+            {{ range .Versions }}
+                <option value="{{ .Value }}" {{ if .Selected }}selected="selected"{{ end }}>{{ .Label }}</option>
+            {{ end }}
+        </select>
+        <input type="button" value="About" class="trigger-toggle-about">
+    </div>
+</div>
+
+<div id="file-type-wrapper">
+    <label for="file-type">File Type</label>
+    <select id="file-type">
+        {{ range .FileTypes }}
+            <option value="{{ .Value }}" {{ if .Selected }}selected="selected"{{ end }}>{{ .Label }}</option>
+        {{ end }}
+    </select>
+</div>
+<div id="file-wrapper">
+    <textarea id="file" autocorrect="off" autocomplete="off" autocapitalize="off" spellcheck="false">
+        {{- printf "%s" .Snippet.File -}}
+    </textarea>
+</div>
+
+<div id="args-wrapper">
+    <textarea class="arg" disabled="disabled" autocorrect="off" autocomplete="off" autocapitalize="off" spellcheck="false">dasel</textarea>
+    <textarea class="arg" disabled="disabled" autocorrect="off" autocomplete="off" autocapitalize="off" spellcheck="false">-f</textarea>
+    <textarea id="arg-file-type" class="arg" disabled="disabled" autocorrect="off" autocomplete="off" autocapitalize="off" spellcheck="false">{{ .Snippet.FileType }}</textarea>
+    {{ range .Snippet.Args }}<textarea class="arg" autocorrect="off" autocomplete="off" autocapitalize="off" spellcheck="false">{{- printf "%v" . -}}</textarea>{{ end }}
+</div>
+
+<div id="output"></div>
+
+<div id="about">
+    <p>
+        Source code available at <a href="https://github.com/TomWright/daselplayground" target="_blank" rel="noopener">
+            https://github.com/TomWright/daselplayground</a>.
+    </p>
+</div>
+</body>
+</html>
