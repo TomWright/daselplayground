@@ -1,12 +1,12 @@
 package storage
 
 import (
-	"errors"
+	"fmt"
 	"github.com/tomwright/daselplayground/internal/domain"
 )
 
 var (
-	ErrSnippetNotFound = errors.New("snippet not found")
+	ErrSnippetNotFound = fmt.Errorf("snippet not found")
 )
 
 type SnippetStore interface {

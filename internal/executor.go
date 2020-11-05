@@ -49,11 +49,15 @@ type ExecuteArgs struct {
 	Snippet *domain.Snippet
 }
 
+var restrictedArgs = []string{
+	"-o", "--out",
+}
+
 // Execute executes a dasel command.
-func (e *Executor) Execute(args ExecuteArgs) (result string, daselErr error, err error) {
+func (e *Executor) Execute(args ExecuteArgs) (result string, daselErr error, validationErr error, err error) {
 	versionOpts, ok := e.versions[args.Snippet.Version]
 	if !ok {
-		return "", nil, ErrInvalidVersion
+		return "", nil, ErrInvalidVersion, nil
 	}
 
 	daselArgs := make([]string, 0)
@@ -62,6 +66,11 @@ func (e *Executor) Execute(args ExecuteArgs) (result string, daselErr error, err
 	}
 
 	for _, a := range args.Snippet.Args {
+		for _, restrictedArg := range restrictedArgs {
+			if a.Name == restrictedArg {
+				return "", nil, &RestrictedArgErr{Arg: a.Name}, nil
+			}
+		}
 		if a.HasValue {
 			daselArgs = append(daselArgs, a.Name, a.Value)
 		} else {
@@ -74,14 +83,14 @@ func (e *Executor) Execute(args ExecuteArgs) (result string, daselErr error, err
 
 	reader, writer, err := os.Pipe()
 	if err != nil {
-		return "", nil, fmt.Errorf("could not get os pipe: %w", err)
+		return "", nil, nil, fmt.Errorf("could not get os pipe: %w", err)
 	}
 
 	echoCmd.Stdout = writer
 	daselCmd.Stdin = reader
 
 	if err := echoCmd.Start(); err != nil {
-		return "", nil, fmt.Errorf("could not start echo: %w", err)
+		return "", nil, nil, fmt.Errorf("could not start echo: %w", err)
 	}
 
 	errCh := make(chan error)
@@ -101,15 +110,23 @@ func (e *Executor) Execute(args ExecuteArgs) (result string, daselErr error, err
 	select {
 	case err, ok := <-errCh:
 		if ok {
-			return "", nil, err
+			return "", nil, nil, err
 		}
 	}
 
 	out, err := daselCmd.CombinedOutput()
 	if err != nil {
 		daselErr := fmt.Errorf("%w: %s", err, string(out))
-		return "", daselErr, nil
+		return "", daselErr, nil, nil
 	}
 
-	return string(out), nil, nil
+	return string(out), nil, nil, nil
+}
+
+type RestrictedArgErr struct {
+	Arg string
+}
+
+func (e *RestrictedArgErr) Error() string {
+	return fmt.Sprintf("restricted argument: %s", e.Arg)
 }

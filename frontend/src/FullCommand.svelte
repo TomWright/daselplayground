@@ -26,5 +26,7 @@
 </main>
 
 <style>
-
+main {
+	margin-block-end: 0.8em;
+}
 </style>

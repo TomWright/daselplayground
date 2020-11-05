@@ -4,23 +4,28 @@
     let versions = [];
 
     onMount(async () => {
+        loading = true
         await fetch('http://localhost:8080/versions')
             .then(r => r.json())
             .then(data => {
-            	console.log('Loaded versions', data.versions)
+                console.log('Loaded versions', data.versions)
                 versions = data.versions;
                 version = versions[0]
+            })
+            .finally(() => {
+                loading = false
             })
     })
 
     afterUpdate(() => {
         if (!version) {
-        	// console.log(versions)
+            // console.log(versions)
             version = versions[0]
         }
     })
 
     export let version;
+    export let loading = false;
 </script>
 
 <main>

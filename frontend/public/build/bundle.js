@@ -4,6 +4,12 @@ var app = (function () {
     'use strict';
 
     function noop() { }
+    function assign(tar, src) {
+        // @ts-ignore
+        for (const k in src)
+            tar[k] = src[k];
+        return tar;
+    }
     function add_location(element, file, line, column, char) {
         element.__svelte_meta = {
             loc: { file, line, column, char }
@@ -26,6 +32,42 @@ var app = (function () {
     }
     function is_empty(obj) {
         return Object.keys(obj).length === 0;
+    }
+    function create_slot(definition, ctx, $$scope, fn) {
+        if (definition) {
+            const slot_ctx = get_slot_context(definition, ctx, $$scope, fn);
+            return definition[0](slot_ctx);
+        }
+    }
+    function get_slot_context(definition, ctx, $$scope, fn) {
+        return definition[1] && fn
+            ? assign($$scope.ctx.slice(), definition[1](fn(ctx)))
+            : $$scope.ctx;
+    }
+    function get_slot_changes(definition, $$scope, dirty, fn) {
+        if (definition[2] && fn) {
+            const lets = definition[2](fn(dirty));
+            if ($$scope.dirty === undefined) {
+                return lets;
+            }
+            if (typeof lets === 'object') {
+                const merged = [];
+                const len = Math.max($$scope.dirty.length, lets.length);
+                for (let i = 0; i < len; i += 1) {
+                    merged[i] = $$scope.dirty[i] | lets[i];
+                }
+                return merged;
+            }
+            return $$scope.dirty | lets;
+        }
+        return $$scope.dirty;
+    }
+    function update_slot(slot, slot_definition, ctx, $$scope, dirty, get_slot_changes_fn, get_slot_context_fn) {
+        const slot_changes = get_slot_changes(slot_definition, $$scope, dirty, get_slot_changes_fn);
+        if (slot_changes) {
+            const slot_context = get_slot_context(slot_definition, ctx, $$scope, get_slot_context_fn);
+            slot.p(slot_context, slot_changes);
+        }
     }
 
     function append(target, node) {
@@ -431,11 +473,11 @@ var app = (function () {
 
     function get_each_context(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[3] = list[i];
+    	child_ctx[4] = list[i];
     	return child_ctx;
     }
 
-    // (29:12) {#if versions}
+    // (34:12) {#if versions}
     function create_if_block(ctx) {
     	let each_1_anchor;
     	let each_value = /*versions*/ ctx[1];
@@ -496,17 +538,17 @@ var app = (function () {
     		block,
     		id: create_if_block.name,
     		type: "if",
-    		source: "(29:12) {#if versions}",
+    		source: "(34:12) {#if versions}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (30:16) {#each versions as v}
+    // (35:16) {#each versions as v}
     function create_each_block(ctx) {
     	let option;
-    	let t_value = /*v*/ ctx[3] + "";
+    	let t_value = /*v*/ ctx[4] + "";
     	let t;
     	let option_value_value;
 
@@ -514,18 +556,18 @@ var app = (function () {
     		c: function create() {
     			option = element("option");
     			t = text(t_value);
-    			option.__value = option_value_value = /*v*/ ctx[3];
+    			option.__value = option_value_value = /*v*/ ctx[4];
     			option.value = option.__value;
-    			add_location(option, file, 30, 20, 711);
+    			add_location(option, file, 35, 20, 848);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, option, anchor);
     			append_dev(option, t);
     		},
     		p: function update(ctx, dirty) {
-    			if (dirty & /*versions*/ 2 && t_value !== (t_value = /*v*/ ctx[3] + "")) set_data_dev(t, t_value);
+    			if (dirty & /*versions*/ 2 && t_value !== (t_value = /*v*/ ctx[4] + "")) set_data_dev(t, t_value);
 
-    			if (dirty & /*versions*/ 2 && option_value_value !== (option_value_value = /*v*/ ctx[3])) {
+    			if (dirty & /*versions*/ 2 && option_value_value !== (option_value_value = /*v*/ ctx[4])) {
     				prop_dev(option, "__value", option_value_value);
     				option.value = option.__value;
     			}
@@ -539,7 +581,7 @@ var app = (function () {
     		block,
     		id: create_each_block.name,
     		type: "each",
-    		source: "(30:16) {#each versions as v}",
+    		source: "(35:16) {#each versions as v}",
     		ctx
     	});
 
@@ -561,10 +603,10 @@ var app = (function () {
     			select = element("select");
     			if (if_block) if_block.c();
     			attr_dev(select, "name", "version");
-    			if (/*version*/ ctx[0] === void 0) add_render_callback(() => /*select_change_handler*/ ctx[2].call(select));
-    			add_location(select, file, 27, 8, 581);
-    			add_location(label, file, 26, 4, 565);
-    			add_location(main, file, 25, 0, 554);
+    			if (/*version*/ ctx[0] === void 0) add_render_callback(() => /*select_change_handler*/ ctx[3].call(select));
+    			add_location(select, file, 32, 8, 718);
+    			add_location(label, file, 31, 4, 702);
+    			add_location(main, file, 30, 0, 691);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -577,7 +619,7 @@ var app = (function () {
     			select_option(select, /*version*/ ctx[0]);
 
     			if (!mounted) {
-    				dispose = listen_dev(select, "change", /*select_change_handler*/ ctx[2]);
+    				dispose = listen_dev(select, "change", /*select_change_handler*/ ctx[3]);
     				mounted = true;
     			}
     		},
@@ -626,10 +668,14 @@ var app = (function () {
     	let versions = [];
 
     	onMount(async () => {
+    		$$invalidate(2, loading = true);
+
     		await fetch("http://localhost:8080/versions").then(r => r.json()).then(data => {
     			console.log("Loaded versions", data.versions);
     			$$invalidate(1, versions = data.versions);
     			$$invalidate(0, version = versions[0]);
+    		}).finally(() => {
+    			$$invalidate(2, loading = false);
     		});
     	});
 
@@ -641,7 +687,8 @@ var app = (function () {
     	});
 
     	let { version } = $$props;
-    	const writable_props = ["version"];
+    	let { loading = false } = $$props;
+    	const writable_props = ["version", "loading"];
 
     	Object.keys($$props).forEach(key => {
     		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console_1.warn(`<VersionSelector> was created with unknown prop '${key}'`);
@@ -655,26 +702,34 @@ var app = (function () {
 
     	$$self.$$set = $$props => {
     		if ("version" in $$props) $$invalidate(0, version = $$props.version);
+    		if ("loading" in $$props) $$invalidate(2, loading = $$props.loading);
     	};
 
-    	$$self.$capture_state = () => ({ afterUpdate, onMount, versions, version });
+    	$$self.$capture_state = () => ({
+    		afterUpdate,
+    		onMount,
+    		versions,
+    		version,
+    		loading
+    	});
 
     	$$self.$inject_state = $$props => {
     		if ("versions" in $$props) $$invalidate(1, versions = $$props.versions);
     		if ("version" in $$props) $$invalidate(0, version = $$props.version);
+    		if ("loading" in $$props) $$invalidate(2, loading = $$props.loading);
     	};
 
     	if ($$props && "$$inject" in $$props) {
     		$$self.$inject_state($$props.$$inject);
     	}
 
-    	return [version, versions, select_change_handler];
+    	return [version, versions, loading, select_change_handler];
     }
 
     class VersionSelector extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance, create_fragment, safe_not_equal, { version: 0 });
+    		init(this, options, instance, create_fragment, safe_not_equal, { version: 0, loading: 2 });
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
@@ -696,6 +751,14 @@ var app = (function () {
     	}
 
     	set version(value) {
+    		throw new Error("<VersionSelector>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get loading() {
+    		throw new Error("<VersionSelector>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set loading(value) {
     		throw new Error("<VersionSelector>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
     }
@@ -995,6 +1058,7 @@ var app = (function () {
     			code = element("code");
     			t = text(/*command*/ ctx[0]);
     			add_location(code, file$2, 24, 1, 415);
+    			attr_dev(main, "class", "svelte-uypmwe");
     			add_location(main, file$2, 23, 0, 407);
     		},
     		l: function claim(nodes) {
@@ -2065,7 +2129,7 @@ var app = (function () {
 
     /* src/Run.svelte generated by Svelte v3.29.4 */
 
-    const { console: console_1$2 } = globals;
+    const { Error: Error_1, console: console_1$2 } = globals;
     const file$7 = "src/Run.svelte";
 
     function create_fragment$7(ctx) {
@@ -2080,11 +2144,11 @@ var app = (function () {
     			input = element("input");
     			attr_dev(input, "type", "button");
     			input.value = "Run";
-    			add_location(input, file$7, 20, 1, 449);
-    			add_location(main, file$7, 19, 0, 441);
+    			add_location(input, file$7, 47, 4, 1205);
+    			add_location(main, file$7, 46, 0, 1194);
     		},
     		l: function claim(nodes) {
-    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    			throw new Error_1("options.hydrate only works if the component was compiled with the `hydratable: true` option");
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, main, anchor);
@@ -2121,46 +2185,69 @@ var app = (function () {
     	validate_slots("Run", slots, []);
     	let { snippet } = $$props;
     	let { output } = $$props;
+    	let { loading } = $$props;
 
     	async function run() {
+    		$$invalidate(2, loading = true);
+
     		await fetch("http://localhost:8080/execute", {
     			method: "POST",
     			body: JSON.stringify({ snippet })
-    		}).then(r => r.json()).then(data => {
-    			console.log("Executed", data.data);
-    			$$invalidate(1, output = data.data);
+    		}).then(r => {
+    			return r.json().then(data => {
+    				return { r, data };
+    			});
+    		}).then(data => {
+    			if (data.data.error) {
+    				throw new Error(data.data.error);
+    			}
+
+    			if (!data.r.ok) {
+    				throw new Error(`${data.r.status} ${data.r.statusText}`);
+    			}
+
+    			return data.data.data;
+    		}).then(data => {
+    			console.log("Executed", data);
+    			$$invalidate(1, output = data);
+    		}).catch(err => {
+    			$$invalidate(1, output = err);
+    		}).finally(() => {
+    			$$invalidate(2, loading = false);
     		});
     	}
 
-    	const writable_props = ["snippet", "output"];
+    	const writable_props = ["snippet", "output", "loading"];
 
     	Object.keys($$props).forEach(key => {
     		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console_1$2.warn(`<Run> was created with unknown prop '${key}'`);
     	});
 
     	$$self.$$set = $$props => {
-    		if ("snippet" in $$props) $$invalidate(2, snippet = $$props.snippet);
+    		if ("snippet" in $$props) $$invalidate(3, snippet = $$props.snippet);
     		if ("output" in $$props) $$invalidate(1, output = $$props.output);
+    		if ("loading" in $$props) $$invalidate(2, loading = $$props.loading);
     	};
 
-    	$$self.$capture_state = () => ({ snippet, output, run });
+    	$$self.$capture_state = () => ({ snippet, output, loading, run });
 
     	$$self.$inject_state = $$props => {
-    		if ("snippet" in $$props) $$invalidate(2, snippet = $$props.snippet);
+    		if ("snippet" in $$props) $$invalidate(3, snippet = $$props.snippet);
     		if ("output" in $$props) $$invalidate(1, output = $$props.output);
+    		if ("loading" in $$props) $$invalidate(2, loading = $$props.loading);
     	};
 
     	if ($$props && "$$inject" in $$props) {
     		$$self.$inject_state($$props.$$inject);
     	}
 
-    	return [run, output, snippet];
+    	return [run, output, loading, snippet];
     }
 
     class Run extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$7, create_fragment$7, safe_not_equal, { snippet: 2, output: 1 });
+    		init(this, options, instance$7, create_fragment$7, safe_not_equal, { snippet: 3, output: 1, loading: 2 });
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
@@ -2172,29 +2259,41 @@ var app = (function () {
     		const { ctx } = this.$$;
     		const props = options.props || {};
 
-    		if (/*snippet*/ ctx[2] === undefined && !("snippet" in props)) {
+    		if (/*snippet*/ ctx[3] === undefined && !("snippet" in props)) {
     			console_1$2.warn("<Run> was created without expected prop 'snippet'");
     		}
 
     		if (/*output*/ ctx[1] === undefined && !("output" in props)) {
     			console_1$2.warn("<Run> was created without expected prop 'output'");
     		}
+
+    		if (/*loading*/ ctx[2] === undefined && !("loading" in props)) {
+    			console_1$2.warn("<Run> was created without expected prop 'loading'");
+    		}
     	}
 
     	get snippet() {
-    		throw new Error("<Run>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    		throw new Error_1("<Run>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
 
     	set snippet(value) {
-    		throw new Error("<Run>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    		throw new Error_1("<Run>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
 
     	get output() {
-    		throw new Error("<Run>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    		throw new Error_1("<Run>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
 
     	set output(value) {
-    		throw new Error("<Run>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    		throw new Error_1("<Run>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get loading() {
+    		throw new Error_1("<Run>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set loading(value) {
+    		throw new Error_1("<Run>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
     }
 
@@ -2215,8 +2314,8 @@ var app = (function () {
     			input = element("input");
     			attr_dev(input, "type", "button");
     			input.value = "Save";
-    			add_location(input, file$8, 19, 4, 452);
-    			add_location(main, file$8, 18, 0, 441);
+    			add_location(input, file$8, 24, 4, 575);
+    			add_location(main, file$8, 23, 0, 564);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -2255,44 +2354,51 @@ var app = (function () {
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots("Save", slots, []);
     	let { snippet } = $$props;
+    	let { loading } = $$props;
 
     	async function save() {
+    		$$invalidate(1, loading = true);
+
     		await fetch("http://localhost:8080/snippet", {
     			method: "POST",
     			body: JSON.stringify({ snippet })
     		}).then(r => r.json()).then(data => {
     			console.log("Saved", data.snippet);
     			window.location = `/s/${data.snippet.id}`;
+    		}).finally(() => {
+    			$$invalidate(1, loading = false);
     		});
     	}
 
-    	const writable_props = ["snippet"];
+    	const writable_props = ["snippet", "loading"];
 
     	Object.keys($$props).forEach(key => {
     		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console_1$3.warn(`<Save> was created with unknown prop '${key}'`);
     	});
 
     	$$self.$$set = $$props => {
-    		if ("snippet" in $$props) $$invalidate(1, snippet = $$props.snippet);
+    		if ("snippet" in $$props) $$invalidate(2, snippet = $$props.snippet);
+    		if ("loading" in $$props) $$invalidate(1, loading = $$props.loading);
     	};
 
-    	$$self.$capture_state = () => ({ snippet, save });
+    	$$self.$capture_state = () => ({ snippet, loading, save });
 
     	$$self.$inject_state = $$props => {
-    		if ("snippet" in $$props) $$invalidate(1, snippet = $$props.snippet);
+    		if ("snippet" in $$props) $$invalidate(2, snippet = $$props.snippet);
+    		if ("loading" in $$props) $$invalidate(1, loading = $$props.loading);
     	};
 
     	if ($$props && "$$inject" in $$props) {
     		$$self.$inject_state($$props.$$inject);
     	}
 
-    	return [save, snippet];
+    	return [save, loading, snippet];
     }
 
     class Save extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$8, create_fragment$8, safe_not_equal, { snippet: 1 });
+    		init(this, options, instance$8, create_fragment$8, safe_not_equal, { snippet: 2, loading: 1 });
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
@@ -2304,8 +2410,12 @@ var app = (function () {
     		const { ctx } = this.$$;
     		const props = options.props || {};
 
-    		if (/*snippet*/ ctx[1] === undefined && !("snippet" in props)) {
+    		if (/*snippet*/ ctx[2] === undefined && !("snippet" in props)) {
     			console_1$3.warn("<Save> was created without expected prop 'snippet'");
+    		}
+
+    		if (/*loading*/ ctx[1] === undefined && !("loading" in props)) {
+    			console_1$3.warn("<Save> was created without expected prop 'loading'");
     		}
     	}
 
@@ -2316,49 +2426,225 @@ var app = (function () {
     	set snippet(value) {
     		throw new Error("<Save>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
+
+    	get loading() {
+    		throw new Error("<Save>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set loading(value) {
+    		throw new Error("<Save>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+    }
+
+    /* src/Loader.svelte generated by Svelte v3.29.4 */
+
+    const file$9 = "src/Loader.svelte";
+
+    // (7:8) {#if loading}
+    function create_if_block$4(ctx) {
+    	let div1;
+    	let div0;
+
+    	const block = {
+    		c: function create() {
+    			div1 = element("div");
+    			div0 = element("div");
+    			attr_dev(div0, "class", "loader-spinner svelte-13v2blt");
+    			add_location(div0, file$9, 8, 16, 173);
+    			attr_dev(div1, "class", "loader-overlay svelte-13v2blt");
+    			add_location(div1, file$9, 7, 12, 128);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div1, anchor);
+    			append_dev(div1, div0);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div1);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block$4.name,
+    		type: "if",
+    		source: "(7:8) {#if loading}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function create_fragment$9(ctx) {
+    	let main;
+    	let div;
+    	let t;
+    	let current;
+    	let if_block = /*loading*/ ctx[0] && create_if_block$4(ctx);
+    	const default_slot_template = /*#slots*/ ctx[2].default;
+    	const default_slot = create_slot(default_slot_template, ctx, /*$$scope*/ ctx[1], null);
+
+    	const block = {
+    		c: function create() {
+    			main = element("main");
+    			div = element("div");
+    			if (if_block) if_block.c();
+    			t = space();
+    			if (default_slot) default_slot.c();
+    			attr_dev(div, "class", "loader-container svelte-13v2blt");
+    			add_location(div, file$9, 5, 4, 63);
+    			add_location(main, file$9, 4, 0, 52);
+    		},
+    		l: function claim(nodes) {
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, main, anchor);
+    			append_dev(main, div);
+    			if (if_block) if_block.m(div, null);
+    			append_dev(div, t);
+
+    			if (default_slot) {
+    				default_slot.m(div, null);
+    			}
+
+    			current = true;
+    		},
+    		p: function update(ctx, [dirty]) {
+    			if (/*loading*/ ctx[0]) {
+    				if (if_block) ; else {
+    					if_block = create_if_block$4(ctx);
+    					if_block.c();
+    					if_block.m(div, t);
+    				}
+    			} else if (if_block) {
+    				if_block.d(1);
+    				if_block = null;
+    			}
+
+    			if (default_slot) {
+    				if (default_slot.p && dirty & /*$$scope*/ 2) {
+    					update_slot(default_slot, default_slot_template, ctx, /*$$scope*/ ctx[1], dirty, null, null);
+    				}
+    			}
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(default_slot, local);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(default_slot, local);
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(main);
+    			if (if_block) if_block.d();
+    			if (default_slot) default_slot.d(detaching);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_fragment$9.name,
+    		type: "component",
+    		source: "",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function instance$9($$self, $$props, $$invalidate) {
+    	let { $$slots: slots = {}, $$scope } = $$props;
+    	validate_slots("Loader", slots, ['default']);
+    	let { loading = false } = $$props;
+    	const writable_props = ["loading"];
+
+    	Object.keys($$props).forEach(key => {
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Loader> was created with unknown prop '${key}'`);
+    	});
+
+    	$$self.$$set = $$props => {
+    		if ("loading" in $$props) $$invalidate(0, loading = $$props.loading);
+    		if ("$$scope" in $$props) $$invalidate(1, $$scope = $$props.$$scope);
+    	};
+
+    	$$self.$capture_state = () => ({ loading });
+
+    	$$self.$inject_state = $$props => {
+    		if ("loading" in $$props) $$invalidate(0, loading = $$props.loading);
+    	};
+
+    	if ($$props && "$$inject" in $$props) {
+    		$$self.$inject_state($$props.$$inject);
+    	}
+
+    	return [loading, $$scope, slots];
+    }
+
+    class Loader extends SvelteComponentDev {
+    	constructor(options) {
+    		super(options);
+    		init(this, options, instance$9, create_fragment$9, safe_not_equal, { loading: 0 });
+
+    		dispatch_dev("SvelteRegisterComponent", {
+    			component: this,
+    			tagName: "Loader",
+    			options,
+    			id: create_fragment$9.name
+    		});
+    	}
+
+    	get loading() {
+    		throw new Error("<Loader>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set loading(value) {
+    		throw new Error("<Loader>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
     }
 
     /* src/App.svelte generated by Svelte v3.29.4 */
 
-    const { Error: Error_1, console: console_1$4 } = globals;
-    const file$9 = "src/App.svelte";
+    const { Error: Error_1$1, console: console_1$4 } = globals;
+    const file$a = "src/App.svelte";
 
-    function create_fragment$9(ctx) {
-    	let main;
-    	let h1;
-    	let t1;
-    	let p;
-    	let t2;
-    	let a;
-    	let t4;
-    	let t5;
+    // (82:4) <Loader loading="{snippetLoading || versionsLoading || executeLoading || saveLoading}">
+    function create_default_slot(ctx) {
     	let versionselector;
     	let updating_version;
-    	let t6;
+    	let updating_loading;
+    	let t0;
     	let filetypeselector;
     	let updating_fileType;
-    	let t7;
+    	let t1;
     	let filecontent;
     	let updating_content;
-    	let t8;
+    	let t2;
     	let args;
     	let updating_args;
-    	let t9;
+    	let t3;
     	let fullcommand;
     	let updating_command;
-    	let t10;
+    	let t4;
     	let run_1;
     	let updating_snippet;
     	let updating_output;
-    	let t11;
+    	let updating_loading_1;
+    	let t5;
     	let save;
     	let updating_snippet_1;
-    	let t12;
+    	let updating_loading_2;
+    	let t6;
     	let commandoutput;
     	let current;
 
     	function versionselector_version_binding(value) {
-    		/*versionselector_version_binding*/ ctx[4].call(null, value);
+    		/*versionselector_version_binding*/ ctx[7].call(null, value);
+    	}
+
+    	function versionselector_loading_binding(value) {
+    		/*versionselector_loading_binding*/ ctx[8].call(null, value);
     	}
 
     	let versionselector_props = {};
@@ -2367,15 +2653,20 @@ var app = (function () {
     		versionselector_props.version = /*snippet*/ ctx[0].version;
     	}
 
+    	if (/*versionsLoading*/ ctx[3] !== void 0) {
+    		versionselector_props.loading = /*versionsLoading*/ ctx[3];
+    	}
+
     	versionselector = new VersionSelector({
     			props: versionselector_props,
     			$$inline: true
     		});
 
     	binding_callbacks.push(() => bind(versionselector, "version", versionselector_version_binding));
+    	binding_callbacks.push(() => bind(versionselector, "loading", versionselector_loading_binding));
 
     	function filetypeselector_fileType_binding(value) {
-    		/*filetypeselector_fileType_binding*/ ctx[5].call(null, value);
+    		/*filetypeselector_fileType_binding*/ ctx[9].call(null, value);
     	}
 
     	let filetypeselector_props = {};
@@ -2392,7 +2683,7 @@ var app = (function () {
     	binding_callbacks.push(() => bind(filetypeselector, "fileType", filetypeselector_fileType_binding));
 
     	function filecontent_content_binding(value) {
-    		/*filecontent_content_binding*/ ctx[6].call(null, value);
+    		/*filecontent_content_binding*/ ctx[10].call(null, value);
     	}
 
     	let filecontent_props = {};
@@ -2405,7 +2696,7 @@ var app = (function () {
     	binding_callbacks.push(() => bind(filecontent, "content", filecontent_content_binding));
 
     	function args_args_binding(value) {
-    		/*args_args_binding*/ ctx[7].call(null, value);
+    		/*args_args_binding*/ ctx[11].call(null, value);
     	}
 
     	let args_props = {};
@@ -2418,24 +2709,28 @@ var app = (function () {
     	binding_callbacks.push(() => bind(args, "args", args_args_binding));
 
     	function fullcommand_command_binding(value) {
-    		/*fullcommand_command_binding*/ ctx[8].call(null, value);
+    		/*fullcommand_command_binding*/ ctx[12].call(null, value);
     	}
 
     	let fullcommand_props = { snippet: /*snippet*/ ctx[0] };
 
-    	if (/*command*/ ctx[2] !== void 0) {
-    		fullcommand_props.command = /*command*/ ctx[2];
+    	if (/*command*/ ctx[6] !== void 0) {
+    		fullcommand_props.command = /*command*/ ctx[6];
     	}
 
     	fullcommand = new FullCommand({ props: fullcommand_props, $$inline: true });
     	binding_callbacks.push(() => bind(fullcommand, "command", fullcommand_command_binding));
 
     	function run_1_snippet_binding(value) {
-    		/*run_1_snippet_binding*/ ctx[9].call(null, value);
+    		/*run_1_snippet_binding*/ ctx[13].call(null, value);
     	}
 
     	function run_1_output_binding(value) {
-    		/*run_1_output_binding*/ ctx[10].call(null, value);
+    		/*run_1_output_binding*/ ctx[14].call(null, value);
+    	}
+
+    	function run_1_loading_binding(value) {
+    		/*run_1_loading_binding*/ ctx[15].call(null, value);
     	}
 
     	let run_1_props = {};
@@ -2448,12 +2743,21 @@ var app = (function () {
     		run_1_props.output = /*output*/ ctx[1];
     	}
 
+    	if (/*executeLoading*/ ctx[4] !== void 0) {
+    		run_1_props.loading = /*executeLoading*/ ctx[4];
+    	}
+
     	run_1 = new Run({ props: run_1_props, $$inline: true });
     	binding_callbacks.push(() => bind(run_1, "snippet", run_1_snippet_binding));
     	binding_callbacks.push(() => bind(run_1, "output", run_1_output_binding));
+    	binding_callbacks.push(() => bind(run_1, "loading", run_1_loading_binding));
 
     	function save_snippet_binding(value) {
-    		/*save_snippet_binding*/ ctx[11].call(null, value);
+    		/*save_snippet_binding*/ ctx[16].call(null, value);
+    	}
+
+    	function save_loading_binding(value) {
+    		/*save_loading_binding*/ ctx[17].call(null, value);
     	}
 
     	let save_props = {};
@@ -2462,8 +2766,13 @@ var app = (function () {
     		save_props.snippet = /*snippet*/ ctx[0];
     	}
 
+    	if (/*saveLoading*/ ctx[5] !== void 0) {
+    		save_props.loading = /*saveLoading*/ ctx[5];
+    	}
+
     	save = new Save({ props: save_props, $$inline: true });
     	binding_callbacks.push(() => bind(save, "snippet", save_snippet_binding));
+    	binding_callbacks.push(() => bind(save, "loading", save_loading_binding));
 
     	commandoutput = new CommandOutput({
     			props: { output: /*output*/ ctx[1] },
@@ -2472,76 +2781,53 @@ var app = (function () {
 
     	const block = {
     		c: function create() {
-    			main = element("main");
-    			h1 = element("h1");
-    			h1.textContent = "Dasel Playground";
-    			t1 = space();
-    			p = element("p");
-    			t2 = text("Playground environment for ");
-    			a = element("a");
-    			a.textContent = "Dasel";
-    			t4 = text(".");
-    			t5 = space();
     			create_component(versionselector.$$.fragment);
-    			t6 = space();
+    			t0 = space();
     			create_component(filetypeselector.$$.fragment);
-    			t7 = space();
+    			t1 = space();
     			create_component(filecontent.$$.fragment);
-    			t8 = space();
+    			t2 = space();
     			create_component(args.$$.fragment);
-    			t9 = space();
+    			t3 = space();
     			create_component(fullcommand.$$.fragment);
-    			t10 = space();
+    			t4 = space();
     			create_component(run_1.$$.fragment);
-    			t11 = space();
+    			t5 = space();
     			create_component(save.$$.fragment);
-    			t12 = space();
+    			t6 = space();
     			create_component(commandoutput.$$.fragment);
-    			attr_dev(h1, "class", "svelte-1y0uilm");
-    			add_location(h1, file$9, 66, 4, 1895);
-    			attr_dev(a, "href", "https://github.com/TomWright/dasel");
-    			attr_dev(a, "target", "_blank");
-    			add_location(a, file$9, 67, 34, 1955);
-    			add_location(p, file$9, 67, 4, 1925);
-    			attr_dev(main, "class", "svelte-1y0uilm");
-    			add_location(main, file$9, 65, 0, 1884);
-    		},
-    		l: function claim(nodes) {
-    			throw new Error_1("options.hydrate only works if the component was compiled with the `hydratable: true` option");
     		},
     		m: function mount(target, anchor) {
-    			insert_dev(target, main, anchor);
-    			append_dev(main, h1);
-    			append_dev(main, t1);
-    			append_dev(main, p);
-    			append_dev(p, t2);
-    			append_dev(p, a);
-    			append_dev(p, t4);
-    			append_dev(main, t5);
-    			mount_component(versionselector, main, null);
-    			append_dev(main, t6);
-    			mount_component(filetypeselector, main, null);
-    			append_dev(main, t7);
-    			mount_component(filecontent, main, null);
-    			append_dev(main, t8);
-    			mount_component(args, main, null);
-    			append_dev(main, t9);
-    			mount_component(fullcommand, main, null);
-    			append_dev(main, t10);
-    			mount_component(run_1, main, null);
-    			append_dev(main, t11);
-    			mount_component(save, main, null);
-    			append_dev(main, t12);
-    			mount_component(commandoutput, main, null);
+    			mount_component(versionselector, target, anchor);
+    			insert_dev(target, t0, anchor);
+    			mount_component(filetypeselector, target, anchor);
+    			insert_dev(target, t1, anchor);
+    			mount_component(filecontent, target, anchor);
+    			insert_dev(target, t2, anchor);
+    			mount_component(args, target, anchor);
+    			insert_dev(target, t3, anchor);
+    			mount_component(fullcommand, target, anchor);
+    			insert_dev(target, t4, anchor);
+    			mount_component(run_1, target, anchor);
+    			insert_dev(target, t5, anchor);
+    			mount_component(save, target, anchor);
+    			insert_dev(target, t6, anchor);
+    			mount_component(commandoutput, target, anchor);
     			current = true;
     		},
-    		p: function update(ctx, [dirty]) {
+    		p: function update(ctx, dirty) {
     			const versionselector_changes = {};
 
     			if (!updating_version && dirty & /*snippet*/ 1) {
     				updating_version = true;
     				versionselector_changes.version = /*snippet*/ ctx[0].version;
     				add_flush_callback(() => updating_version = false);
+    			}
+
+    			if (!updating_loading && dirty & /*versionsLoading*/ 8) {
+    				updating_loading = true;
+    				versionselector_changes.loading = /*versionsLoading*/ ctx[3];
+    				add_flush_callback(() => updating_loading = false);
     			}
 
     			versionselector.$set(versionselector_changes);
@@ -2575,9 +2861,9 @@ var app = (function () {
     			const fullcommand_changes = {};
     			if (dirty & /*snippet*/ 1) fullcommand_changes.snippet = /*snippet*/ ctx[0];
 
-    			if (!updating_command && dirty & /*command*/ 4) {
+    			if (!updating_command && dirty & /*command*/ 64) {
     				updating_command = true;
-    				fullcommand_changes.command = /*command*/ ctx[2];
+    				fullcommand_changes.command = /*command*/ ctx[6];
     				add_flush_callback(() => updating_command = false);
     			}
 
@@ -2596,6 +2882,12 @@ var app = (function () {
     				add_flush_callback(() => updating_output = false);
     			}
 
+    			if (!updating_loading_1 && dirty & /*executeLoading*/ 16) {
+    				updating_loading_1 = true;
+    				run_1_changes.loading = /*executeLoading*/ ctx[4];
+    				add_flush_callback(() => updating_loading_1 = false);
+    			}
+
     			run_1.$set(run_1_changes);
     			const save_changes = {};
 
@@ -2603,6 +2895,12 @@ var app = (function () {
     				updating_snippet_1 = true;
     				save_changes.snippet = /*snippet*/ ctx[0];
     				add_flush_callback(() => updating_snippet_1 = false);
+    			}
+
+    			if (!updating_loading_2 && dirty & /*saveLoading*/ 32) {
+    				updating_loading_2 = true;
+    				save_changes.loading = /*saveLoading*/ ctx[5];
+    				add_flush_callback(() => updating_loading_2 = false);
     			}
 
     			save.$set(save_changes);
@@ -2634,21 +2932,121 @@ var app = (function () {
     			current = false;
     		},
     		d: function destroy(detaching) {
-    			if (detaching) detach_dev(main);
-    			destroy_component(versionselector);
-    			destroy_component(filetypeselector);
-    			destroy_component(filecontent);
-    			destroy_component(args);
-    			destroy_component(fullcommand);
-    			destroy_component(run_1);
-    			destroy_component(save);
-    			destroy_component(commandoutput);
+    			destroy_component(versionselector, detaching);
+    			if (detaching) detach_dev(t0);
+    			destroy_component(filetypeselector, detaching);
+    			if (detaching) detach_dev(t1);
+    			destroy_component(filecontent, detaching);
+    			if (detaching) detach_dev(t2);
+    			destroy_component(args, detaching);
+    			if (detaching) detach_dev(t3);
+    			destroy_component(fullcommand, detaching);
+    			if (detaching) detach_dev(t4);
+    			destroy_component(run_1, detaching);
+    			if (detaching) detach_dev(t5);
+    			destroy_component(save, detaching);
+    			if (detaching) detach_dev(t6);
+    			destroy_component(commandoutput, detaching);
     		}
     	};
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_fragment$9.name,
+    		id: create_default_slot.name,
+    		type: "slot",
+    		source: "(82:4) <Loader loading=\\\"{snippetLoading || versionsLoading || executeLoading || saveLoading}\\\">",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function create_fragment$a(ctx) {
+    	let main;
+    	let h1;
+    	let t1;
+    	let p;
+    	let t2;
+    	let a;
+    	let t4;
+    	let t5;
+    	let loader;
+    	let current;
+
+    	loader = new Loader({
+    			props: {
+    				loading: /*snippetLoading*/ ctx[2] || /*versionsLoading*/ ctx[3] || /*executeLoading*/ ctx[4] || /*saveLoading*/ ctx[5],
+    				$$slots: { default: [create_default_slot] },
+    				$$scope: { ctx }
+    			},
+    			$$inline: true
+    		});
+
+    	const block = {
+    		c: function create() {
+    			main = element("main");
+    			h1 = element("h1");
+    			h1.textContent = "Dasel Playground";
+    			t1 = space();
+    			p = element("p");
+    			t2 = text("Playground environment for ");
+    			a = element("a");
+    			a.textContent = "Dasel";
+    			t4 = text(".");
+    			t5 = space();
+    			create_component(loader.$$.fragment);
+    			attr_dev(h1, "class", "svelte-1y0uilm");
+    			add_location(h1, file$a, 79, 4, 2346);
+    			attr_dev(a, "href", "https://github.com/TomWright/dasel");
+    			attr_dev(a, "target", "_blank");
+    			add_location(a, file$a, 80, 34, 2406);
+    			add_location(p, file$a, 80, 4, 2376);
+    			attr_dev(main, "class", "svelte-1y0uilm");
+    			add_location(main, file$a, 78, 0, 2335);
+    		},
+    		l: function claim(nodes) {
+    			throw new Error_1$1("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, main, anchor);
+    			append_dev(main, h1);
+    			append_dev(main, t1);
+    			append_dev(main, p);
+    			append_dev(p, t2);
+    			append_dev(p, a);
+    			append_dev(p, t4);
+    			append_dev(main, t5);
+    			mount_component(loader, main, null);
+    			current = true;
+    		},
+    		p: function update(ctx, [dirty]) {
+    			const loader_changes = {};
+    			if (dirty & /*snippetLoading, versionsLoading, executeLoading, saveLoading*/ 60) loader_changes.loading = /*snippetLoading*/ ctx[2] || /*versionsLoading*/ ctx[3] || /*executeLoading*/ ctx[4] || /*saveLoading*/ ctx[5];
+
+    			if (dirty & /*$$scope, output, snippet, saveLoading, executeLoading, command, versionsLoading*/ 262267) {
+    				loader_changes.$$scope = { dirty, ctx };
+    			}
+
+    			loader.$set(loader_changes);
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(loader.$$.fragment, local);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(loader.$$.fragment, local);
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(main);
+    			destroy_component(loader);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_fragment$a.name,
     		type: "component",
     		source: "",
     		ctx
@@ -2657,10 +3055,9 @@ var app = (function () {
     	return block;
     }
 
-    function instance$9($$self, $$props, $$invalidate) {
+    function instance$a($$self, $$props, $$invalidate) {
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots("App", slots, []);
-    	let { loading = false } = $$props;
 
     	let { snippet = {
     		id: null,
@@ -2680,36 +3077,45 @@ var app = (function () {
     		const splitPath = window.location.pathname.split("/");
 
     		if (splitPath.length === 3) {
+    			$$invalidate(2, snippetLoading = true);
     			const id = splitPath[2];
     			console.log(`loading snippet ${id}`);
-    			$$invalidate(3, loading = true);
 
     			await fetch(`http://localhost:8080/snippet?id=${id}`).then(r => {
-    				if (!r.ok) {
-    					if (r.status === 404) {
-    						throw new Error("Snippet not found");
-    					}
+    				return r.json().then(data => {
+    					return { r, data };
+    				});
+    			}).then(data => {
+    				console.log(data.data);
 
-    					throw new Error(`${r.status} ${r.statusText}`);
+    				if (data.data.error) {
+    					throw new Error(data.data.error);
     				}
 
-    				return r;
-    			}).then(r => r.json()).then(data => {
-    				return data.snippet;
+    				if (!data.r.ok) {
+    					throw new Error(`${data.r.status} ${data.r.statusText}`);
+    				}
+
+    				return data.data.snippet;
     			}).then(s => {
     				console.log(`loaded snippet`, s);
     				$$invalidate(0, snippet = s);
-    				$$invalidate(3, loading = false);
     				return s;
     			}).catch(err => {
     				$$invalidate(1, output = err);
+    			}).finally(() => {
+    				$$invalidate(2, snippetLoading = false);
     			});
     		}
     	});
 
     	let { output = null } = $$props;
+    	let snippetLoading = false;
+    	let versionsLoading = false;
+    	let executeLoading = false;
+    	let saveLoading = false;
     	let command;
-    	const writable_props = ["loading", "snippet", "output"];
+    	const writable_props = ["snippet", "output"];
 
     	Object.keys($$props).forEach(key => {
     		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console_1$4.warn(`<App> was created with unknown prop '${key}'`);
@@ -2718,6 +3124,11 @@ var app = (function () {
     	function versionselector_version_binding(value) {
     		snippet.version = value;
     		$$invalidate(0, snippet);
+    	}
+
+    	function versionselector_loading_binding(value) {
+    		versionsLoading = value;
+    		$$invalidate(3, versionsLoading);
     	}
 
     	function filetypeselector_fileType_binding(value) {
@@ -2737,7 +3148,7 @@ var app = (function () {
 
     	function fullcommand_command_binding(value) {
     		command = value;
-    		$$invalidate(2, command);
+    		$$invalidate(6, command);
     	}
 
     	function run_1_snippet_binding(value) {
@@ -2750,13 +3161,22 @@ var app = (function () {
     		$$invalidate(1, output);
     	}
 
+    	function run_1_loading_binding(value) {
+    		executeLoading = value;
+    		$$invalidate(4, executeLoading);
+    	}
+
     	function save_snippet_binding(value) {
     		snippet = value;
     		$$invalidate(0, snippet);
     	}
 
+    	function save_loading_binding(value) {
+    		saveLoading = value;
+    		$$invalidate(5, saveLoading);
+    	}
+
     	$$self.$$set = $$props => {
-    		if ("loading" in $$props) $$invalidate(3, loading = $$props.loading);
     		if ("snippet" in $$props) $$invalidate(0, snippet = $$props.snippet);
     		if ("output" in $$props) $$invalidate(1, output = $$props.output);
     	};
@@ -2771,17 +3191,24 @@ var app = (function () {
     		Run,
     		Save,
     		onMount,
-    		loading,
+    		Loader,
     		snippet,
     		output,
+    		snippetLoading,
+    		versionsLoading,
+    		executeLoading,
+    		saveLoading,
     		command
     	});
 
     	$$self.$inject_state = $$props => {
-    		if ("loading" in $$props) $$invalidate(3, loading = $$props.loading);
     		if ("snippet" in $$props) $$invalidate(0, snippet = $$props.snippet);
     		if ("output" in $$props) $$invalidate(1, output = $$props.output);
-    		if ("command" in $$props) $$invalidate(2, command = $$props.command);
+    		if ("snippetLoading" in $$props) $$invalidate(2, snippetLoading = $$props.snippetLoading);
+    		if ("versionsLoading" in $$props) $$invalidate(3, versionsLoading = $$props.versionsLoading);
+    		if ("executeLoading" in $$props) $$invalidate(4, executeLoading = $$props.executeLoading);
+    		if ("saveLoading" in $$props) $$invalidate(5, saveLoading = $$props.saveLoading);
+    		if ("command" in $$props) $$invalidate(6, command = $$props.command);
     	};
 
     	if ($$props && "$$inject" in $$props) {
@@ -2791,54 +3218,52 @@ var app = (function () {
     	return [
     		snippet,
     		output,
+    		snippetLoading,
+    		versionsLoading,
+    		executeLoading,
+    		saveLoading,
     		command,
-    		loading,
     		versionselector_version_binding,
+    		versionselector_loading_binding,
     		filetypeselector_fileType_binding,
     		filecontent_content_binding,
     		args_args_binding,
     		fullcommand_command_binding,
     		run_1_snippet_binding,
     		run_1_output_binding,
-    		save_snippet_binding
+    		run_1_loading_binding,
+    		save_snippet_binding,
+    		save_loading_binding
     	];
     }
 
     class App extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$9, create_fragment$9, safe_not_equal, { loading: 3, snippet: 0, output: 1 });
+    		init(this, options, instance$a, create_fragment$a, safe_not_equal, { snippet: 0, output: 1 });
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
     			tagName: "App",
     			options,
-    			id: create_fragment$9.name
+    			id: create_fragment$a.name
     		});
     	}
 
-    	get loading() {
-    		throw new Error_1("<App>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-    	}
-
-    	set loading(value) {
-    		throw new Error_1("<App>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-    	}
-
     	get snippet() {
-    		throw new Error_1("<App>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    		throw new Error_1$1("<App>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
 
     	set snippet(value) {
-    		throw new Error_1("<App>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    		throw new Error_1$1("<App>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
 
     	get output() {
-    		throw new Error_1("<App>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    		throw new Error_1$1("<App>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
 
     	set output(value) {
-    		throw new Error_1("<App>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    		throw new Error_1$1("<App>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
     }
 

@@ -29,3 +29,9 @@ func writeErr(rw http.ResponseWriter, err error, status int) {
 type ErrorResponse struct {
 	Error error `json:"error"`
 }
+
+func (r ErrorResponse) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]interface{}{
+		"error": r.Error.Error(),
+	})
+}

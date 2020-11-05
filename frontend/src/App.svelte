@@ -8,8 +8,7 @@
     import Run from "./Run.svelte";
     import Save from "./Save.svelte";
     import {onMount} from 'svelte'
-
-    export let loading = false
+    import Loader from "./Loader.svelte";
 
     export let snippet = {
         id: null,
@@ -28,31 +27,40 @@
     onMount(async () => {
         const splitPath = window.location.pathname.split("/")
         if (splitPath.length === 3) {
+            snippetLoading = true
             const id = splitPath[2]
             console.log(`loading snippet ${id}`)
-            loading = true
             await fetch(`http://localhost:8080/snippet?id=${id}`)
                 .then(r => {
-                    if (!r.ok) {
-                        if (r.status === 404) {
-                            throw new Error("Snippet not found")
+                    return r.json().then(
+                        data => {
+                            return {
+                                r: r,
+                                data: data
+                            }
                         }
-                        throw new Error(`${r.status} ${r.statusText}`)
-                    }
-                    return r
+                    )
                 })
-                .then(r => r.json())
                 .then(data => {
-                    return data.snippet
+                    console.log(data.data)
+                    if (data.data.error) {
+                        throw new Error(data.data.error)
+                    }
+                    if (!data.r.ok) {
+                        throw new Error(`${data.r.status} ${data.r.statusText}`)
+                    }
+                    return data.data.snippet
                 })
                 .then(s => {
                     console.log(`loaded snippet`, s)
                     snippet = s
-                    loading = false
                     return s
                 })
                 .catch(err => {
                     output = err
+                })
+                .finally(() => {
+                    snippetLoading = false
                 })
         }
     })
@@ -60,20 +68,27 @@
 
     export let output = null
 
+    let snippetLoading = false
+    let versionsLoading = false
+    let executeLoading = false
+    let saveLoading = false
+
     let command;
 </script>
 
 <main>
     <h1>Dasel Playground</h1>
     <p>Playground environment for <a href="https://github.com/TomWright/dasel" target="_blank">Dasel</a>.</p>
-    <VersionSelector bind:version="{snippet.version}"/>
-    <FileTypeSelector bind:fileType="{snippet.fileType}"/>
-    <FileContent bind:content="{snippet.file}"/>
-    <Args bind:args={snippet.args}/>
-    <FullCommand bind:command={command} snippet="{snippet}"/>
-    <Run bind:snippet={snippet} bind:output={output}/>
-    <Save bind:snippet={snippet}/>
-    <CommandOutput output="{output}"/>
+    <Loader loading="{snippetLoading || versionsLoading || executeLoading || saveLoading}">
+        <VersionSelector bind:version="{snippet.version}" bind:loading={versionsLoading}/>
+        <FileTypeSelector bind:fileType="{snippet.fileType}"/>
+        <FileContent bind:content="{snippet.file}"/>
+        <Args bind:args={snippet.args}/>
+        <FullCommand bind:command={command} snippet="{snippet}"/>
+        <Run bind:snippet={snippet} bind:output={output} bind:loading={executeLoading}/>
+        <Save bind:snippet={snippet} bind:loading={saveLoading}/>
+        <CommandOutput output="{output}"/>
+    </Loader>
 </main>
 
 <style>

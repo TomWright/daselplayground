@@ -44,11 +44,15 @@ func executeHTTPHandler(executor *Executor) func(rw http.ResponseWriter, r *http
 			return
 		}
 
-		out, daselErr, err := executor.Execute(ExecuteArgs{
+		out, daselErr, validationErr, err := executor.Execute(ExecuteArgs{
 			Snippet: req.Snippet,
 		})
 		if err != nil {
 			writeErr(rw, err, http.StatusInternalServerError)
+			return
+		}
+		if validationErr != nil {
+			writeErr(rw, validationErr, http.StatusBadRequest)
 			return
 		}
 
