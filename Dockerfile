@@ -34,4 +34,6 @@ COPY --from=node /root/frontend ./frontend
 ENV DASEL_BUILDS=v1.1.0:./builds/dasel_v1_1_0
 ENV HTTP_LISTEN_ADDRESS=:8080
 
+EXPOSE 8080
+
 CMD ["./server"]

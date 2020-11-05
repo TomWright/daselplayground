@@ -5,10 +5,10 @@
     import FileContent from "./FileContent.svelte";
     import CommandOutput from "./CommandOutput.svelte";
     import Args from "./Args.svelte";
-    import Run from "./Run.svelte";
-    import Save from "./Save.svelte";
     import {onMount} from 'svelte'
     import Loader from "./Loader.svelte";
+    import {createSnippet, executeSnippet, getSnippet} from './api'
+    import ButtonGroup from "./ButtonGroup.svelte";
 
     export let snippet = {
         id: null,
@@ -30,27 +30,7 @@
             snippetLoading = true
             const id = splitPath[2]
             console.log(`loading snippet ${id}`)
-            await fetch(`http://localhost:8080/snippet?id=${id}`)
-                .then(r => {
-                    return r.json().then(
-                        data => {
-                            return {
-                                r: r,
-                                data: data
-                            }
-                        }
-                    )
-                })
-                .then(data => {
-                    console.log(data.data)
-                    if (data.data.error) {
-                        throw new Error(data.data.error)
-                    }
-                    if (!data.r.ok) {
-                        throw new Error(`${data.r.status} ${data.r.statusText}`)
-                    }
-                    return data.data.snippet
-                })
+            await getSnippet(id)
                 .then(s => {
                     console.log(`loaded snippet`, s)
                     snippet = s
@@ -65,6 +45,35 @@
         }
     })
 
+    async function runSnippet() {
+        snippetLoading = true
+        await executeSnippet(snippet)
+            .then(data => {
+                console.log('Executed', data)
+                output = data;
+            })
+            .catch(err => {
+                output = err
+            })
+            .finally(() => {
+                snippetLoading = false
+            })
+    }
+
+    async function saveSnippet() {
+        saveLoading = true
+        await createSnippet(snippet)
+            .then(createdSnippet => {
+                console.log('Saved', createdSnippet)
+                window.location = `/s/${createdSnippet.id}`
+            })
+            .catch(err => {
+                output = err
+            })
+            .finally(() => {
+                saveLoading = false
+            })
+    }
 
     export let output = null
 
@@ -85,8 +94,16 @@
         <FileContent bind:content="{snippet.file}"/>
         <Args bind:args={snippet.args}/>
         <FullCommand bind:command={command} snippet="{snippet}"/>
-        <Run bind:snippet={snippet} bind:output={output} bind:loading={executeLoading}/>
-        <Save bind:snippet={snippet} bind:loading={saveLoading}/>
+        <ButtonGroup inline={true} buttons={[
+                {
+                    label: 'Run',
+                    onClick: runSnippet
+                },
+                {
+                    label: 'Save',
+                    onClick: saveSnippet
+                }
+            ]}/>
         <CommandOutput output="{output}"/>
     </Loader>
 </main>

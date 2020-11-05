@@ -1,3 +1,4 @@
 .idea/
 dasel
 frontend/node_modules/
+frontend/public/build/

@@ -57,9 +57,7 @@ func executeHTTPHandler(executor *Executor) func(rw http.ResponseWriter, r *http
 		}
 
 		if daselErr != nil {
-			writeJSON(rw, ExecuteResponse{
-				Data: daselErr.Error(),
-			}, http.StatusBadRequest)
+			writeErr(rw, daselErr, http.StatusBadRequest)
 			return
 		}
 

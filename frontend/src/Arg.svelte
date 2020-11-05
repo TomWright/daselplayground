@@ -1,4 +1,5 @@
 <script>
+	import Button from "./Button.svelte";
 	export let name = null;
 	export let value = null;
 	export let hasValue = false;
@@ -16,11 +17,11 @@
 			<input type="text" bind:value={value}>
 		</label>
 	{/if}
-	<button on:click={deleteArg}>Delete</button>
 	<label>
 		Has value
 		<input type="checkbox" bind:checked={hasValue} on:change={() => {if (!hasValue) {value = null} else {value = ''}}}>
 	</label>
+	<Button inline={true} on:click={deleteArg}>Delete</Button>
 </main>
 
 <style>
