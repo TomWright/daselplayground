@@ -89,7 +89,7 @@
     <h1>Dasel Playground</h1>
     <p>Playground environment for <a href="https://github.com/TomWright/dasel" target="_blank">Dasel</a>.</p>
     <Loader loading="{snippetLoading || versionsLoading || executeLoading || saveLoading}">
-        <VersionSelector bind:version="{snippet.version}" bind:loading={versionsLoading}/>
+        <VersionSelector bind:output={output} bind:version="{snippet.version}" bind:loading={versionsLoading}/>
         <FileTypeSelector bind:fileType="{snippet.fileType}"/>
         <FileContent bind:content="{snippet.file}"/>
         <Args bind:args={snippet.args}/>

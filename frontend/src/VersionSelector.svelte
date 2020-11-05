@@ -1,16 +1,21 @@
 <script>
     import {afterUpdate, onMount} from "svelte"
+    import {getVersions} from "./api";
 
     let versions = [];
 
+    export let output;
+
     onMount(async () => {
         loading = true
-        await fetch('http://localhost:8080/versions')
-            .then(r => r.json())
-            .then(data => {
-                console.log('Loaded versions', data.versions)
-                versions = data.versions;
+        await getVersions()
+            .then(v => {
+                console.log('Loaded versions', v)
+                versions = v;
                 version = versions[0]
+            })
+            .catch(err => {
+                output = err
             })
             .finally(() => {
                 loading = false

@@ -1,5 +1,5 @@
 async function postRequest(uri, body) {
-    return fetch(`http://localhost:8080${uri}`, {
+    return fetch(`${uri}`, {
         method: 'POST',
         body: JSON.stringify(body)
     })
@@ -8,7 +8,7 @@ async function postRequest(uri, body) {
 }
 
 async function getRequest(uri) {
-    return fetch(`http://localhost:8080${uri}`, {
+    return fetch(`${uri}`, {
         method: 'GET'
     })
         .then(formatResponse)
@@ -39,6 +39,11 @@ function extractError(result) {
 export async function getSnippet(id) {
     return getRequest(`/snippet?id=${id}`)
         .then(result => result.data.snippet)
+}
+
+export async function getVersions() {
+    return getRequest(`/versions`)
+        .then(result => result.data.versions)
 }
 
 export async function executeSnippet(snippet) {
