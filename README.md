@@ -8,7 +8,7 @@ This is not hosted anywhere yet but you can run it locally via docker.
 
 ### Docker
 ```bash
-docker run -p 8080:8080 --rm ghcr.io/tomwright/daselplayground:dev
+docker run -p 8080:8080 --rm ghcr.io/tomwright/daselplayground:latest
 ```
 
 Docker images are pushed to the github container repository: [tomwright/daselplayground](https://github.com/users/TomWright/packages/container/package/daselplayground).
