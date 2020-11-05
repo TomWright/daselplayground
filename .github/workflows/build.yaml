@@ -31,3 +31,17 @@ jobs:
         run: docker push ghcr.io/tomwright/daselplayground:latest
       - name: Docker push release
         run: docker push ghcr.io/tomwright/daselplayground:${{ env.RELEASE_VERSION }}
+  deploy:
+    strategy:
+      matrix:
+        go-version: [ 1.15.x ]
+        os:
+          - ubuntu-latest
+    name: Docker Build
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Set env
+        run: echo ::set-env name=RELEASE_VERSION::${GITHUB_REF:10}
+      # todo : clone manifests
+      - name: Helm upgrade
+        run: helm upgrade dasel-playground ./deployments/dasel-playground -n dasel-playground --set imageVersion=${{ env.RELEASE_VERSION }}
