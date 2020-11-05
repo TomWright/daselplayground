@@ -2,7 +2,12 @@
 
 A playground for [Dasel](https://github.com/TomWright/dasel).
 
-This is not hosted anywhere yet but you can run it locally via docker.
+Publicly hosted at [https://dasel.tomwright.me](https://dasel.tomwright.me)
+
+You can also run this yourself in Docker.
+
+## Shared snippets
+Shared snippets are stored in-memory and will be lost when the container restarts. There are plans to use more permanent storage though.
 
 ## Quickstart
 
