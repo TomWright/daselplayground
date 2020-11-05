@@ -2,20 +2,17 @@ package internal
 
 import (
 	"encoding/json"
+	"github.com/tomwright/daselplayground/internal/domain"
 	"io/ioutil"
 	"net/http"
 )
 
 type ExecuteRequest struct {
-	Version  string   `json:"version"`
-	File     string   `json:"file"`
-	FileType string   `json:"fileType"`
-	Args     []string `json:"args"`
+	Snippet *domain.Snippet `json:"snippet"`
 }
 
 type ExecuteResponse struct {
 	Data string `json:"data"`
-	Args []string `json:"args"`
 }
 
 func executeHTTPHandler(executor *Executor) func(rw http.ResponseWriter, r *http.Request) {
@@ -42,11 +39,13 @@ func executeHTTPHandler(executor *Executor) func(rw http.ResponseWriter, r *http
 			return
 		}
 
-		out, daselArgs, daselErr, err := executor.Execute(ExecuteArgs{
-			Version:  req.Version,
-			FileType: req.FileType,
-			File:     req.File,
-			Args:     req.Args,
+		if req.Snippet == nil {
+			writeErr(rw, ErrMissingSnippet, http.StatusBadRequest)
+			return
+		}
+
+		out, daselErr, err := executor.Execute(ExecuteArgs{
+			Snippet: req.Snippet,
 		})
 		if err != nil {
 			writeErr(rw, err, http.StatusInternalServerError)
@@ -56,14 +55,12 @@ func executeHTTPHandler(executor *Executor) func(rw http.ResponseWriter, r *http
 		if daselErr != nil {
 			writeJSON(rw, ExecuteResponse{
 				Data: daselErr.Error(),
-				Args: daselArgs,
 			}, http.StatusBadRequest)
 			return
 		}
 
 		writeJSON(rw, ExecuteResponse{
 			Data: out,
-			Args: daselArgs,
 		}, http.StatusOK)
 	}
 }

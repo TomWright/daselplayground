@@ -3,6 +3,7 @@ package internal
 import (
 	"errors"
 	"fmt"
+	"github.com/tomwright/daselplayground/internal/domain"
 	"os"
 	"os/exec"
 )
@@ -10,7 +11,7 @@ import (
 // VersionOpts defines options for a specific dasel version.
 type VersionOpts struct {
 	Version string
-	Path string
+	Path    string
 }
 
 // NewExecutor returns an executor that can be used to run dasel commands.
@@ -45,36 +46,42 @@ func (e *Executor) Versions() []string {
 
 // ExecuteArgs define the opts to use when executing dasel commands.
 type ExecuteArgs struct {
-	Version string
-	FileType string
-	File string
-	Args []string
+	Snippet *domain.Snippet
 }
 
 // Execute executes a dasel command.
-func (e *Executor) Execute(args ExecuteArgs) (result string, daselArgs []string, daselErr error, err error) {
-	versionOpts, ok := e.versions[args.Version]
+func (e *Executor) Execute(args ExecuteArgs) (result string, daselErr error, err error) {
+	versionOpts, ok := e.versions[args.Snippet.Version]
 	if !ok {
-		return "", nil, nil, ErrInvalidVersion
+		return "", nil, ErrInvalidVersion
 	}
 
-	daselArgs = append([]string{
-		"-p", args.FileType,
-	}, args.Args...)
+	daselArgs := make([]string, 0)
+	if args.Snippet.FileType != "" {
+		daselArgs = append(daselArgs, "-p", args.Snippet.FileType)
+	}
 
-	echoCmd := exec.Command("echo", args.File)
+	for _, a := range args.Snippet.Args {
+		if a.HasValue {
+			daselArgs = append(daselArgs, a.Name, a.Value)
+		} else {
+			daselArgs = append(daselArgs, a.Name)
+		}
+	}
+
+	echoCmd := exec.Command("echo", args.Snippet.File)
 	daselCmd := exec.Command(versionOpts.Path, daselArgs...)
 
 	reader, writer, err := os.Pipe()
 	if err != nil {
-		return "", daselArgs, nil, fmt.Errorf("could not get os pipe: %w", err)
+		return "", nil, fmt.Errorf("could not get os pipe: %w", err)
 	}
 
 	echoCmd.Stdout = writer
 	daselCmd.Stdin = reader
 
 	if err := echoCmd.Start(); err != nil {
-		return "", daselArgs, nil, fmt.Errorf("could not start echo: %w", err)
+		return "", nil, fmt.Errorf("could not start echo: %w", err)
 	}
 
 	errCh := make(chan error)
@@ -94,15 +101,15 @@ func (e *Executor) Execute(args ExecuteArgs) (result string, daselArgs []string,
 	select {
 	case err, ok := <-errCh:
 		if ok {
-			return "", daselArgs, nil, err
+			return "", nil, err
 		}
 	}
 
 	out, err := daselCmd.CombinedOutput()
 	if err != nil {
 		daselErr := fmt.Errorf("%w: %s", err, string(out))
-		return "", daselArgs, daselErr, nil
+		return "", daselErr, nil
 	}
 
-	return string(out), daselArgs, nil, nil
+	return string(out), nil, nil
 }
