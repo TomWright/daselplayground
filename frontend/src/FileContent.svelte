@@ -15,6 +15,7 @@
     textarea {
         margin-top: 0.5em;
         width: 100%;
-        resize: none;
+        resize: vertical;
+        min-height: 10em;
     }
 </style>
