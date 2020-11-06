@@ -43,5 +43,7 @@ jobs:
       - name: Set env
         run: echo ::set-env name=RELEASE_VERSION::${GITHUB_REF:10}
       # todo : clone manifests
-      - name: Helm upgrade
-        run: helm upgrade dasel-playground ./deployments/dasel-playground -n dasel-playground --set imageVersion=${{ env.RELEASE_VERSION }}
+      - name: Helm 3
+        uses: WyriHaximus/github-action-helm3@v2.0
+        exec: helm upgrade dasel-playground ./deployments/dasel-playground -n dasel-playground --set imageVersion=${{ env.RELEASE_VERSION }}
+        kubeconfig: '${{ secrets.KUBECONFIG }}'
