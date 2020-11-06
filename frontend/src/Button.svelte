@@ -5,10 +5,12 @@
 
     export let disabled = false;
     export let inline = false;
+    export let className = ''
 </script>
 
 <main class:inline={inline}>
     <button
+            class="{className}"
             disabled={disabled}
             on:click={e => (dispatch('click', e))}
     >

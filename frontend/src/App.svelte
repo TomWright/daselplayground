@@ -115,11 +115,17 @@
         <ButtonGroup inline={true} buttons={[
                 {
                     label: 'Run',
-                    onClick: runSnippet
+                    onClick: runSnippet,
+                    props: {
+                        className: 'cta run',
+                    }
                 },
                 {
                     label: 'Save',
-                    onClick: saveSnippet
+                    onClick: saveSnippet,
+                    props: {
+                        className: 'cta save',
+                    }
                 }
             ]}/>
         <CommandOutput output="{output}"/>
