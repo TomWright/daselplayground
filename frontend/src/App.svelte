@@ -83,6 +83,24 @@
     let saveLoading = false
 
     let command;
+
+    export let analytics = false
+    if (analytics) {
+        const head = document.getElementsByTagName('head')[0];
+
+        // Global site tag (gtag.js) - Google Analytics
+        const gtag = document.createElement('script');
+        gtag.type = 'text/javascript';
+        gtag.onload = function() {
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){window.dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-59FDXE6E15');
+        }
+        gtag.async = true
+        gtag.src = 'https://www.googletagmanager.com/gtag/js?id=G-59FDXE6E15';
+        head.appendChild(gtag);
+    }
 </script>
 
 <main>

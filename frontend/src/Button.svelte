@@ -5,7 +5,6 @@
 
     export let disabled = false;
     export let inline = false;
-    export let className = null;
 </script>
 
 <main class:inline={inline}>
