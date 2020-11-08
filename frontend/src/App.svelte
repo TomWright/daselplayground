@@ -126,6 +126,10 @@
         {
             'label': 'XML',
             'value': 'xml'
+        },
+        {
+            'label': 'CSV',
+            'value': 'csv'
         }
     ]
 
