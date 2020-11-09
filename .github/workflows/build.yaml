@@ -37,7 +37,7 @@ jobs:
         run: curl -sL https://github.com/digitalocean/doctl/releases/download/v1.27.0/doctl-1.27.0-linux-amd64.tar.gz | tar -xzv
       - name: Get kube config
         id: kubeconfig
-        run: mkdir ./kube && doctl -t ${{ secrets.DO_PAT }} kubernetes cluster kubeconfig show ${{ secrets.KUBERNETES_CLUSTER }} > ./kube/config
+        run: mkdir ./kube && ./doctl -t ${{ secrets.DO_PAT }} kubernetes cluster kubeconfig show ${{ secrets.KUBERNETES_CLUSTER }} > ./kube/config
       - name: Helm 3
         uses: WyriHaximus/github-action-helm3@use-existing-kubeconfig-when-available
         with:
