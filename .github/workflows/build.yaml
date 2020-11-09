@@ -43,7 +43,7 @@ jobs:
       - name: Set env
         run: echo ::set-env name=RELEASE_VERSION::${GITHUB_REF:10}
       - name: Clone manifests
-        run: git clone https://${{ secret.GITLAB_USER }}:${{ secrets.GITLAB_PAT }}@gitlab.com/wost/kube-manifests.git
+        run: git clone https://${{ secrets.GITLAB_USER }}:${{ secrets.GITLAB_PAT }}@gitlab.com/wost/kube-manifests.git
       - name: Download doctl
         run: curl -sL https://github.com/digitalocean/doctl/releases/download/v1.27.0/doctl-1.27.0-linux-amd64.tar.gz | tar -xzv
       - name: Get kube config
