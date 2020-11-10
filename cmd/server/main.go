@@ -78,7 +78,7 @@ func migrateUp(db *sql.DB) error {
 	if err != nil {
 		return fmt.Errorf("could not get driver instance: %w", err)
 	}
-	m, err := migrate.NewWithDatabaseInstance("file://", "mysql", driver)
+	m, err := migrate.NewWithDatabaseInstance("file://"+migrationsPath, "mysql", driver)
 	if err != nil {
 		return fmt.Errorf("could not get migrate instance: %w", err)
 	}
