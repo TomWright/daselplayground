@@ -35,8 +35,11 @@ COPY --from=go /root/bin/server ./server
 COPY --from=go /root/bin/builds ./builds
 COPY --from=node /root/frontend ./frontend
 
+COPY ./migrations ./migrations
+
 ENV DASEL_BUILDS=latest:./builds/dasel_latest,v1.4.0:./builds/dasel_v1_4_0,v1.3.0:./builds/dasel_v1_3_0,v1.2.0:./builds/dasel_v1_2_0,v1.1.0:./builds/dasel_v1_1_0
 ENV HTTP_LISTEN_ADDRESS=:8080
+ENV MIGRATIONS_PATH=/root/migrations
 
 EXPOSE 8080
 
