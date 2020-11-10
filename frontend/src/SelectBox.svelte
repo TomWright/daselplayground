@@ -3,7 +3,7 @@
 
 	export let options;
 	export let value;
-	export let name;
+	export let id;
 
 	afterUpdate(() => {
 		if (!value && (options && options.length > 0)) {
@@ -14,19 +14,18 @@
 </script>
 
 <main>
-	<label>
-		<select name="{name}" bind:value={value}>
-			{#if options}
-				{#each options as v}
-					<option value="{v.value}">{v.label}</option>
-				{/each}
-			{/if}
-		</select>
-	</label>
+	<select id="{id}" bind:value={value}>
+		{#if options}
+			{#each options as v}
+				<option value="{v.value}">{v.label}</option>
+			{/each}
+		{/if}
+	</select>
 </main>
 
 <style>
 	select {
 		width: 100%;
+		margin-top: 0.5em;
 	}
 </style>
