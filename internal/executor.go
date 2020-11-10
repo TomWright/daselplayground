@@ -6,6 +6,7 @@ import (
 	"github.com/tomwright/daselplayground/internal/domain"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 // VersionOpts defines options for a specific dasel version.
@@ -53,6 +54,50 @@ var restrictedArgs = []string{
 	"-o", "--out",
 }
 
+func StringToArgs(args string) []string {
+	parts := make([]string, 1)
+
+	currentIndex := 0
+
+	var closingChar string
+	for _, s := range args {
+		currentChar := string(s)
+
+		if closingChar != "" && currentChar == closingChar {
+			parts = append(parts, "")
+			currentIndex++
+			continue
+		}
+		switch {
+		case currentChar == ` ` && closingChar == "":
+			if parts[currentIndex] != "" {
+				parts = append(parts, "")
+				currentIndex++
+			}
+		case currentChar == `'` && closingChar == "":
+			closingChar = `'`
+			if parts[currentIndex] != "" {
+				parts = append(parts, "")
+				currentIndex++
+			}
+		case currentChar == `"` && closingChar == "":
+			closingChar = `"`
+			if parts[currentIndex] != "" {
+				parts = append(parts, "")
+				currentIndex++
+			}
+		default:
+			parts[currentIndex] += string(s)
+		}
+	}
+
+	lastIndex := len(parts) - 1
+	if parts[lastIndex] == "" {
+		parts = parts[:lastIndex]
+	}
+	return parts
+}
+
 // Execute executes a dasel command.
 func (e *Executor) Execute(args ExecuteArgs) (result string, daselErr error, validationErr error, err error) {
 	versionOpts, ok := e.versions[args.Snippet.Version]
@@ -60,25 +105,17 @@ func (e *Executor) Execute(args ExecuteArgs) (result string, daselErr error, val
 		return "", nil, ErrInvalidVersion, nil
 	}
 
-	daselArgs := make([]string, 0)
-	if args.Snippet.FileType != "" {
-		daselArgs = append(daselArgs, "-p", args.Snippet.FileType)
-	}
+	daselArgs := StringToArgs(args.Snippet.Args)
 
-	for _, a := range args.Snippet.Args {
+	for _, a := range daselArgs {
 		for _, restrictedArg := range restrictedArgs {
-			if a.Name == restrictedArg {
-				return "", nil, &RestrictedArgErr{Arg: a.Name}, nil
+			if a == restrictedArg || strings.HasPrefix(a, restrictedArg+" ") || strings.HasPrefix(a, restrictedArg+"=") {
+				return "", nil, &RestrictedArgErr{Arg: a}, nil
 			}
 		}
-		if a.HasValue {
-			daselArgs = append(daselArgs, a.Name, a.Value)
-		} else {
-			daselArgs = append(daselArgs, a.Name)
-		}
 	}
 
-	echoCmd := exec.Command("echo", args.Snippet.File)
+	echoCmd := exec.Command("echo", args.Snippet.Input)
 	daselCmd := exec.Command(versionOpts.Path, daselArgs...)
 
 	reader, writer, err := os.Pipe()

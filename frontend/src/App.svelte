@@ -1,8 +1,4 @@
 <script>
-    import FullCommand from "./FullCommand.svelte";
-    import FileContent from "./FileContent.svelte";
-    import CommandOutput from "./CommandOutput.svelte";
-    import Args from "./Args.svelte";
     import {onMount} from 'svelte'
     import Loader from "./Loader.svelte";
     import {createSnippet, executeSnippet, getSnippet, getVersions} from './api'
@@ -10,18 +6,12 @@
     import IconLink from "./IconLink.svelte";
     import TopBar from "./TopBar.svelte";
     import SelectBox from "./SelectBox.svelte";
+    import TextArea from "./TextArea.svelte";
 
     export let snippet = {
         id: null,
-        file: `{"name": "Tom"}`,
-        fileType: 'json',
-        args: [
-            {
-                name: '.name',
-                value: null,
-                hasValue: false
-            }
-        ],
+        input: `{\n  "name": "Tom"\n}`,
+        args: '-p json \'.name\'',
         version: null
     }
 
@@ -106,33 +96,6 @@
     let executeLoading = false
     let saveLoading = false
 
-    let fileTypes = [
-        {
-            'label': 'None',
-            'value': null
-        },
-        {
-            'label': 'JSON',
-            'value': 'json'
-        },
-        {
-            'label': 'YAML',
-            'value': 'yaml'
-        },
-        {
-            'label': 'TOML',
-            'value': 'toml'
-        },
-        {
-            'label': 'XML',
-            'value': 'xml'
-        },
-        {
-            'label': 'CSV',
-            'value': 'csv'
-        }
-    ]
-
     let command;
 
     export let analytics = false
@@ -163,18 +126,36 @@
         <h1>Dasel Playground</h1>
     </TopBar>
     <p>Playground environment for <a href="https://github.com/TomWright/dasel" target="_blank">Dasel</a>.</p>
-    <IconLink href="https://github.com/TomWright/daselplayground" newWindow={true} icon="/github.png">View Source on
+    <IconLink href="https://github.com/TomWright/daselplayground" newWindow={true} alt="View Source on GitHub"
+              icon="/github.png">View Source on
         GitHub
     </IconLink>
     <div class="content-wrapper">
         <Loader loading="{snippetLoading || versionsLoading || executeLoading || saveLoading}">
-            <div class="form-wrapper">
-                <SelectBox bind:options={versions} bind:value={snippet.version}/>
-                <SelectBox bind:options={fileTypes} bind:value={snippet.fileType}/>
+            <div class="top-level-form-wrapper">
+                <div class="input">
+                    <label for="versions-input">
+                        Dasel Version
+                    </label>
+                    <SelectBox id="versions-input" bind:options={versions} bind:value={snippet.version}/>
+                </div>
             </div>
-            <FileContent bind:content="{snippet.file}"/>
-            <Args bind:args={snippet.args}/>
-            <FullCommand bind:command={command} snippet="{snippet}"/>
+
+            <div class="main-input-wrapper">
+                <div class="input">
+                    <label for="args-input">
+                        Arguments
+                        <TextArea id="args-input" isCode="{true}" bind:value={snippet.args}/>
+                    </label>
+                </div>
+                <div class="input">
+                    <label for="file-input">
+                        File
+                    </label>
+                    <TextArea id="file-input" isCode="{true}" bind:value={snippet.input} noWrap="{true}"/>
+                </div>
+            </div>
+
             <ButtonGroup inline={true} buttons={[
                 {
                     label: 'Run',
@@ -191,7 +172,10 @@
                     }
                 }
             ]}/>
-            <CommandOutput output="{output}"/>
+            <label for="command-output">
+                Output
+                <TextArea id="command-output" isCode="{true}" disabled="{true}" bind:value={output}/>
+            </label>
         </Loader>
     </div>
 </main>
@@ -214,19 +198,44 @@
         margin-block-end: 0.5em;
     }
 
-    @media (min-width: 640px) {
-        main {
-            max-width: 80%;
-        }
-    }
-
     .content-wrapper {
         margin-top: 1em;
     }
-    .form-wrapper {
+
+    .top-level-form-wrapper {
         margin: 0 auto;
         position: relative;
         width: 100%;
         max-width: 300px;
+    }
+
+    .main-input-wrapper {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+    }
+
+    .input {
+        width: 100%;
+    }
+
+    @media (min-width: 640px) {
+        main {
+            max-width: 80%;
+        }
+
+        .main-input-wrapper {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+        }
+
+        .input {
+            margin-right: 1em;
+        }
+
+        .input:last-of-type {
+            margin-right: 0;
+        }
     }
 </style>

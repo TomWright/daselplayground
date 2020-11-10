@@ -69,18 +69,5 @@ func validateSaveSnippet(snippet *domain.Snippet) error {
 		return ErrMissingSnippet
 	}
 
-	if snippet.Args == nil {
-		snippet.Args = []*domain.Arg{}
-	}
-
-	newArgs := make([]*domain.Arg, 0)
-	for _, a := range snippet.Args {
-		if a.Name == "" {
-			continue
-		}
-		newArgs = append(newArgs, a)
-	}
-	snippet.Args = newArgs
-
 	return nil
 }
