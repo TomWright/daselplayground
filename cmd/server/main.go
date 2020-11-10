@@ -50,14 +50,16 @@ func main() {
 }
 
 func mysqlConnect() (*sql.DB, error) {
-	db, err := sql.Open("mysql", fmt.Sprintf(
+	dsn := fmt.Sprintf(
 		"%s:%s@tcp(%s:%s)/%s?parseTime=true&multiStatements=true",
 		os.Getenv("MYSQL_USERNAME"),
 		os.Getenv("MYSQL_PASSWORD"),
 		os.Getenv("MYSQL_HOST"),
 		os.Getenv("MYSQL_PORT"),
-		os.Getenv("MYSQL_DATABASE")),
+		os.Getenv("MYSQL_DATABASE"),
 	)
+	db, err := sql.Open("mysql", dsn)
+	log.Printf("dsn: %s\n", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("mysql open failed: %w", err)
 	}
