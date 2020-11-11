@@ -17,19 +17,25 @@ import (
 )
 
 func main() {
-	db, err := mysqlConnect()
-	if err != nil {
-		log.Printf("could not connect to mysql: %s", err)
-		os.Exit(1)
-	}
+	var snippetStore storage.SnippetStore
 
-	if err := migrateUp(db); err != nil {
-		log.Printf("could not migrate up: %s", err)
-		os.Exit(1)
+	if os.Getenv("MYSQL_HOST") == "" {
+		snippetStore = storage.NewInMemorySnippetStore()
+	} else {
+		db, err := mysqlConnect()
+		if err != nil {
+			log.Printf("could not connect to mysql: %s", err)
+			os.Exit(1)
+		}
+
+		if err := migrateUp(db); err != nil {
+			log.Printf("could not migrate up: %s", err)
+			os.Exit(1)
+		}
+		snippetStore = storage.NewMySQLSnippetStore(db)
 	}
 
 	executor := internal.NewExecutor()
-	snippetStore := storage.NewMySQLSnippetStore(db)
 
 	for _, build := range strings.Split(os.Getenv("DASEL_BUILDS"), ",") {
 		split := strings.Split(build, ":")
@@ -84,7 +90,9 @@ func migrateUp(db *sql.DB) error {
 		return fmt.Errorf("could not get migrate instance: %w", err)
 	}
 	if err := m.Up(); err != nil {
-		return fmt.Errorf("migrate up failed: %w", err)
+		if err != migrate.ErrNoChange {
+			return fmt.Errorf("migrate up failed: %w", err)
+		}
 	}
 	return nil
 }
