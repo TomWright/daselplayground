@@ -23,7 +23,7 @@ var (
 )
 
 func (s *mysqlSnippetStore) Create(snippet *domain.Snippet) error {
-	query := `INSERT INTO snippets (id, input, args, version) ($1, $2, $3, $4);`
+	query := `INSERT INTO snippets (id, input, args, version) VALUES (?, ?, ?, ?);`
 	binds := []interface{}{
 		snippet.ID,
 		snippet.Input,
@@ -34,13 +34,13 @@ func (s *mysqlSnippetStore) Create(snippet *domain.Snippet) error {
 	_, err := s.db.Exec(query, binds...)
 	if err != nil {
 		log.Printf("could not create snippet: %s\n", err)
-		return ErrSelectFailed
+		return ErrInsertFailed
 	}
 	return nil
 }
 
 func (s *mysqlSnippetStore) Get(id string) (*domain.Snippet, error) {
-	query := `SELECT id, input, args, version FROM snippets WHERE id = $1 LIMIT 1;`
+	query := `SELECT id, input, args, version FROM snippets WHERE id = ? LIMIT 1;`
 	binds := []interface{}{
 		id,
 	}
@@ -53,7 +53,7 @@ func (s *mysqlSnippetStore) Get(id string) (*domain.Snippet, error) {
 			return nil, ErrSnippetNotFound
 		}
 		log.Printf("could not select snippet: %s\n", err)
-		return nil, ErrInsertFailed
+		return nil, ErrSelectFailed
 	}
 	return snippet, nil
 }
