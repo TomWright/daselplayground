@@ -3,7 +3,6 @@ package storage
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"github.com/tomwright/daselplayground/internal/domain"
 	"log"
 )
