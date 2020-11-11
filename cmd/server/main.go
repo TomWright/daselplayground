@@ -66,7 +66,6 @@ func mysqlConnect() (*sql.DB, error) {
 		os.Getenv("MYSQL_DATABASE"),
 	)
 	db, err := sql.Open("mysql", dsn)
-	log.Printf("dsn: %s\n", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("mysql open failed: %w", err)
 	}
