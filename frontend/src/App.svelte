@@ -7,13 +7,27 @@
     import TopBar from "./TopBar.svelte";
     import SelectBox from "./SelectBox.svelte";
     import TextArea from "./TextArea.svelte";
+    import Button from "./Button.svelte";
 
     export let snippet = {
         id: null,
         input: `{\n  "name": "Tom"\n}`,
-        args: '-p json \'.name\'',
+        args: '-p json .name',
         version: null
     }
+
+    export let argumentsHelpVisible = false;
+
+    async function showArgumentsHelp() {
+        argumentsHelpVisible = true
+        console.log(argumentsHelpVisible)
+    }
+
+    async function hideArgumentsHelp() {
+        argumentsHelpVisible = false
+        console.log(argumentsHelpVisible)
+    }
+
 
     onMount(async () => {
         const splitPath = window.location.pathname.split("/")
@@ -144,7 +158,7 @@
             <div class="main-input-wrapper">
                 <div class="input">
                     <label for="args-input">
-                        Arguments
+                        Arguments <a href="#arguments-help" onclick="return false" on:click="{showArgumentsHelp}">(help)</a>
                         <TextArea id="args-input" isCode="{true}" bind:value={snippet.args}/>
                     </label>
                 </div>
@@ -177,6 +191,18 @@
                 <TextArea id="command-output" isCode="{true}" disabled="{true}" bind:value={output}/>
             </label>
         </Loader>
+
+        <div id="arguments-help" class="notes" class:visible={argumentsHelpVisible}>
+            <p>Use quotes only if the input value contains a space or a quote:</p>
+            <ul>
+                <li>put string -p json .text value</li>
+                <li>put string -p json .text 'Toms value'</li>
+                <li>put string -p json .text "Tom's value"</li>
+            </ul>
+            <p>Including quotes outside of this context may provide unexpected results. Escaping characters is not
+                supported.</p>
+            <Button on:click={hideArgumentsHelp}>Close</Button>
+        </div>
     </div>
 </main>
 
@@ -217,6 +243,16 @@
 
     .input {
         width: 100%;
+    }
+
+    div.notes {
+        text-align: left;
+        font-size: 0.8em;
+        display: none;
+    }
+
+    div.notes.visible {
+        display: block;
     }
 
     @media (min-width: 640px) {
