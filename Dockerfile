@@ -39,7 +39,14 @@ COPY --from=node /root/frontend ./frontend
 
 COPY ./migrations ./migrations
 
-ENV DASEL_BUILDS=latest:./builds/dasel_latest,v1.6.0:./builds/dasel_v1_6_0,v1.5.1:./builds/dasel_v1_5_1,v1.4.1:./builds/dasel_v1_4_1,v1.3.0:./builds/dasel_v1_3_0,v1.2.0:./builds/dasel_v1_2_0,v1.1.0:./builds/dasel_v1_1_0
+ENV DASEL_BUILDS="latest:./builds/dasel_latest"
+ENV DASEL_BUILDS="${DASEL_BUILDS},v1.6.0:./builds/dasel_v1_6_0"
+ENV DASEL_BUILDS="${DASEL_BUILDS},v1.5.1:./builds/dasel_v1_5_1"
+ENV DASEL_BUILDS="${DASEL_BUILDS},v1.4.1:./builds/dasel_v1_4_1"
+ENV DASEL_BUILDS="${DASEL_BUILDS},v1.3.0:./builds/dasel_v1_3_0"
+ENV DASEL_BUILDS="${DASEL_BUILDS},v1.2.0:./builds/dasel_v1_2_0"
+ENV DASEL_BUILDS="${DASEL_BUILDS},v1.1.0:./builds/dasel_v1_1_0"
+
 ENV HTTP_LISTEN_ADDRESS=:8080
 ENV MIGRATIONS_PATH=/root/migrations
 
