@@ -50,19 +50,37 @@
         }
     })
 
+    function compareVersions(a, b) {
+        if (a.label === 'latest') {
+            return -1
+        }
+        if (b.label === 'latest') {
+            return 1
+        }
+        if (a.label < b.label) {
+            return 1
+        }
+        if (b.label < a.label) {
+            return -1
+        }
+        return 0;
+    }
+
     onMount(async () => {
         versionsLoading = true
         await getVersions()
             .then(versionList => {
-                console.log('Loaded versions', versionList)
                 let newVersions = []
                 versionList.forEach(v => {
+                    console.log(v)
                     newVersions.push({
                         label: v,
                         value: v
                     })
                 })
-                versions = newVersions;
+                newVersions.sort(compareVersions);
+                versions = newVersions
+                console.log('Loaded versions', versions)
             })
             .catch(err => {
                 output = err
