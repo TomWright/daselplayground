@@ -3,6 +3,7 @@ package internal
 import (
 	"errors"
 	"fmt"
+	"github.com/mattn/go-shellwords"
 	"github.com/tomwright/daselplayground/internal/domain"
 	"os"
 	"os/exec"
@@ -54,48 +55,15 @@ var restrictedArgs = []string{
 	"-o", "--out",
 }
 
-func StringToArgs(args string) []string {
-	parts := make([]string, 1)
+var argsParser = shellwords.NewParser()
 
-	currentIndex := 0
-
-	var closingChar string
-	for _, s := range args {
-		currentChar := string(s)
-
-		if closingChar != "" && currentChar == closingChar {
-			parts = append(parts, "")
-			currentIndex++
-			continue
-		}
-		switch {
-		case currentChar == ` ` && closingChar == "":
-			if parts[currentIndex] != "" {
-				parts = append(parts, "")
-				currentIndex++
-			}
-		case currentChar == `'` && closingChar == "":
-			closingChar = `'`
-			if parts[currentIndex] != "" {
-				parts = append(parts, "")
-				currentIndex++
-			}
-		case currentChar == `"` && closingChar == "":
-			closingChar = `"`
-			if parts[currentIndex] != "" {
-				parts = append(parts, "")
-				currentIndex++
-			}
-		default:
-			parts[currentIndex] += string(s)
-		}
+// StringToArgs converts the given string into a list of arguments.
+func StringToArgs(args string) ([]string, error) {
+	parts, err := argsParser.Parse(args)
+	if err != nil {
+		return nil, err
 	}
-
-	lastIndex := len(parts) - 1
-	if parts[lastIndex] == "" {
-		parts = parts[:lastIndex]
-	}
-	return parts
+	return parts, nil
 }
 
 // Execute executes a dasel command.
@@ -105,7 +73,10 @@ func (e *Executor) Execute(args ExecuteArgs) (result string, daselErr error, val
 		return "", nil, ErrInvalidVersion, nil
 	}
 
-	daselArgs := StringToArgs(args.Snippet.Args)
+	daselArgs, err := StringToArgs(args.Snippet.Args)
+	if err != nil {
+		return "", nil, nil, err
+	}
 
 	for _, a := range daselArgs {
 		for _, restrictedArg := range restrictedArgs {
