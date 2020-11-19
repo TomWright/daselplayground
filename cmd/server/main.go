@@ -35,7 +35,7 @@ func main() {
 		snippetStore = storage.NewMySQLSnippetStore(db)
 	}
 
-	executor := internal.NewExecutor()
+	executor := internal.NewExecutor(snippetStore)
 
 	for _, build := range strings.Split(os.Getenv("DASEL_BUILDS"), ",") {
 		split := strings.Split(build, ":")
