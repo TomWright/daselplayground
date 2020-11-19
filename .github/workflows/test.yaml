@@ -22,9 +22,3 @@ jobs:
             ${{ runner.os }}-go-
       - name: Test
         run: go test -coverprofile=coverage.txt -covermode=atomic -race ./...
-      - uses: codecov/codecov-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
-          file: ./coverage.txt # optional
-          flags: unittests # optional
-          fail_ci_if_error: true # optional (default = false)
