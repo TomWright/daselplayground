@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/mattn/go-shellwords"
 	"github.com/tomwright/daselplayground/internal/domain"
+	"github.com/tomwright/daselplayground/internal/storage"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -17,14 +19,16 @@ type VersionOpts struct {
 }
 
 // NewExecutor returns an executor that can be used to run dasel commands.
-func NewExecutor() *Executor {
+func NewExecutor(snippetStore storage.SnippetStore) *Executor {
 	return &Executor{
-		versions: map[string]*VersionOpts{},
+		versions:     map[string]*VersionOpts{},
+		snippetStore: snippetStore,
 	}
 }
 
 type Executor struct {
-	versions map[string]*VersionOpts
+	versions     map[string]*VersionOpts
+	snippetStore storage.SnippetStore
 }
 
 func (e *Executor) RegisterVersion(v *VersionOpts) {
@@ -81,7 +85,12 @@ func (e *Executor) Execute(args ExecuteArgs) (result string, daselErr error, val
 	for _, a := range daselArgs {
 		for _, restrictedArg := range restrictedArgs {
 			if a == restrictedArg || strings.HasPrefix(a, restrictedArg+" ") || strings.HasPrefix(a, restrictedArg+"=") {
-				return "", nil, &RestrictedArgErr{Arg: a}, nil
+				daselErr := &RestrictedArgErr{Arg: a}
+				if err := e.snippetStore.StoreExecution(args.Snippet, daselArgs, daselErr.Error(), false); err != nil {
+					log.Printf("could not store unsuccessful snippet execution: %s", err)
+				}
+
+				return "", nil, daselErr, nil
 			}
 		}
 	}
@@ -125,7 +134,16 @@ func (e *Executor) Execute(args ExecuteArgs) (result string, daselErr error, val
 	out, err := daselCmd.CombinedOutput()
 	if err != nil {
 		daselErr := fmt.Errorf("%w: %s", err, string(out))
+
+		if err := e.snippetStore.StoreExecution(args.Snippet, daselArgs, daselErr.Error(), false); err != nil {
+			log.Printf("could not store unsuccessful snippet execution: %s", err)
+		}
+
 		return "", daselErr, nil, nil
+	}
+
+	if err := e.snippetStore.StoreExecution(args.Snippet, daselArgs, string(out), true); err != nil {
+		log.Printf("could not store successful snippet execution: %s", err)
 	}
 
 	return string(out), nil, nil, nil

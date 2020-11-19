@@ -24,3 +24,7 @@ func (s *inMemorySnippetStore) Get(id string) (*domain.Snippet, error) {
 	}
 	return snippet, nil
 }
+
+func (s *inMemorySnippetStore) StoreExecution(snippet *domain.Snippet, args []string, output string, successful bool) error {
+	return nil
+}

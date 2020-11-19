@@ -12,4 +12,5 @@ var (
 type SnippetStore interface {
 	Create(snippet *domain.Snippet) error
 	Get(id string) (*domain.Snippet, error)
+	StoreExecution(snippet *domain.Snippet, args []string, output string, successful bool) error
 }
