@@ -152,12 +152,12 @@
         gtag.onload = function () {
             window.dataLayer = window.dataLayer || [];
 
-            function gtag() {
+            window.gtag = function() {
                 window.dataLayer.push(arguments);
             }
 
-            gtag('js', new Date());
-            gtag('config', 'G-59FDXE6E15');
+            window.gtag('js', new Date());
+            window.gtag('config', 'G-59FDXE6E15');
         }
         gtag.async = true
         gtag.src = 'https://www.googletagmanager.com/gtag/js?id=G-59FDXE6E15';
@@ -165,13 +165,14 @@
     }
 
     function sendGaEvent(event, data) {
-        if (!analytics || typeof window.dataLayer == 'undefined') {
+        if (!analytics) {
             return
         }
-        window.dataLayer.push({
-            event: event,
-            ...data,
-        });
+        if (typeof window.gtag == 'undefined') {
+            console.log('missing gtag')
+            return
+        }
+        window.gtag("event", event, data);
     }
 </script>
 
