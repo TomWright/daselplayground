@@ -35,6 +35,9 @@
             snippetLoading = true
             const id = splitPath[2]
             console.log(`loading snippet ${id}`)
+            sendGaEvent('loadSnippet', {
+                snippetId: id,
+            })
             await getSnippet(id)
                 .then(s => {
                     console.log(`loaded snippet`, s)
@@ -92,6 +95,9 @@
 
     async function runSnippet() {
         snippetLoading = true
+        sendGaEvent('executeSnippet', {
+            snippetId: snippet.id ? snippet.id : '',
+        })
         await executeSnippet(snippet)
             .then(data => {
                 console.log('Executed', data)
@@ -107,9 +113,15 @@
 
     async function saveSnippet() {
         saveLoading = true
+        sendGaEvent('saveSnippet', {
+            snippetId: snippet.id ? snippet.id : '',
+        })
         await createSnippet(snippet)
             .then(createdSnippet => {
                 console.log('Saved', createdSnippet)
+                sendGaEvent('savedSnippet', {
+                    snippetId: createdSnippet.id,
+                })
                 window.location = `/s/${createdSnippet.id}`
             })
             .catch(err => {
@@ -151,6 +163,16 @@
         gtag.src = 'https://www.googletagmanager.com/gtag/js?id=G-59FDXE6E15';
         head.appendChild(gtag);
     }
+
+    function sendGaEvent(event, data) {
+        if (!analytics || typeof window.dataLayer == 'undefined') {
+            return
+        }
+        window.dataLayer.push({
+            event: event,
+            ...data,
+        });
+    }
 </script>
 
 <main>
@@ -176,7 +198,8 @@
             <div class="main-input-wrapper">
                 <div class="input">
                     <label for="args-input">
-                        Arguments <a href="#arguments-help" onclick="return false" on:click="{showArgumentsHelp}">(help)</a>
+                        Arguments <a href="#arguments-help" onclick="return false"
+                                     on:click="{showArgumentsHelp}">(help)</a>
                         <TextArea id="args-input" isCode="{true}" bind:value={snippet.args}/>
                     </label>
                 </div>
