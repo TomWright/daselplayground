@@ -10,7 +10,7 @@ RUN go build -o bin/server cmd/server/main.go
 
 WORKDIR bin/builds
 RUN curl -s https://api.github.com/repos/tomwright/dasel/releases/latest | grep browser_download_url | cut -d '"' -f 4 | wget -qi - && mv dasel_linux_amd64 dasel_latest && chmod +x dasel_latest
-RUN curl -s https://api.github.com/repos/tomwright/dasel/releases | grep v1.9.0 | grep browser_download_url | cut -d '"' -f 4 | wget -qi - && mv dasel_linux_amd64 dasel_v1_9_0 && chmod +x dasel_v1_9_0
+RUN curl -s https://api.github.com/repos/tomwright/dasel/releases | grep v1.9.1 | grep browser_download_url | cut -d '"' -f 4 | wget -qi - && mv dasel_linux_amd64 dasel_v1_9_1 && chmod +x dasel_v1_9_1
 RUN curl -s https://api.github.com/repos/tomwright/dasel/releases | grep v1.8.0 | grep browser_download_url | cut -d '"' -f 4 | wget -qi - && mv dasel_linux_amd64 dasel_v1_8_0 && chmod +x dasel_v1_8_0
 RUN curl -s https://api.github.com/repos/tomwright/dasel/releases | grep v1.7.0 | grep browser_download_url | cut -d '"' -f 4 | wget -qi - && mv dasel_linux_amd64 dasel_v1_7_0 && chmod +x dasel_v1_7_0
 RUN curl -s https://api.github.com/repos/tomwright/dasel/releases | grep v1.6.2 | grep browser_download_url | cut -d '"' -f 4 | wget -qi - && mv dasel_linux_amd64 dasel_v1_6_2 && chmod +x dasel_v1_6_2
@@ -43,7 +43,7 @@ COPY --from=node /root/frontend ./frontend
 COPY ./migrations ./migrations
 
 ENV DASEL_BUILDS="latest:./builds/dasel_latest"
-ENV DASEL_BUILDS="${DASEL_BUILDS},v1.9.0:./builds/dasel_v1_9_0"
+ENV DASEL_BUILDS="${DASEL_BUILDS},v1.9.1:./builds/dasel_v1_9_1"
 ENV DASEL_BUILDS="${DASEL_BUILDS},v1.8.0:./builds/dasel_v1_8_0"
 ENV DASEL_BUILDS="${DASEL_BUILDS},v1.7.0:./builds/dasel_v1_7_0"
 ENV DASEL_BUILDS="${DASEL_BUILDS},v1.6.2:./builds/dasel_v1_6_2"
