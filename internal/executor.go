@@ -56,7 +56,7 @@ type ExecuteArgs struct {
 }
 
 var restrictedArgs = []string{
-	"-o", "--out",
+	"-o", "--out", "update",
 }
 
 var argsParser = shellwords.NewParser()
