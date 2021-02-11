@@ -60,12 +60,33 @@
         if (b.label === 'latest') {
             return 1
         }
-        if (a.label < b.label) {
+        let aSplit = a.label.replace(/^v/,"").split(".")
+        let bSplit = a.label.replace(/^v/,"").split(".")
+
+        // Major
+        if (aSplit[0] < bSplit[0]) {
             return 1
         }
-        if (b.label < a.label) {
+        if (bSplit[0] < aSplit[0]) {
             return -1
         }
+
+        // Minor
+        if (aSplit[1] < bSplit[1]) {
+            return 1
+        }
+        if (bSplit[1] < aSplit[1]) {
+            return -1
+        }
+
+        // Patch
+        if (aSplit[2] < bSplit[2]) {
+            return 1
+        }
+        if (bSplit[2] < aSplit[2]) {
+            return -1
+        }
+
         return 0;
     }
 
