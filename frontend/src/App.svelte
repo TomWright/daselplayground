@@ -60,8 +60,13 @@
         if (b.label === 'latest') {
             return 1
         }
+
         let aSplit = a.label.replace(/^v/,"").split(".")
-        let bSplit = a.label.replace(/^v/,"").split(".")
+        let bSplit = b.label.replace(/^v/,"").split(".")
+        for (let x = 0; x < 3; x++) {
+            aSplit[x] = parseInt(aSplit[x])
+            bSplit[x] = parseInt(bSplit[x])
+        }
 
         // Major
         if (aSplit[0] < bSplit[0]) {
