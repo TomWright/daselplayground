@@ -9,10 +9,14 @@
     import TextArea from "./TextArea.svelte";
     import Button from "./Button.svelte";
 
+    const url = new URL(window.location.href)
+    const input = decodeURIComponent(url.searchParams.get('in') || '')
+    const args = decodeURIComponent(url.searchParams.get('cmd') || '')
+
     export let snippet = {
         id: null,
-        input: `{\n  "name": "Tom"\n}`,
-        args: '-p json .name',
+        input: input || `{\n  "name": "Tom"\n}`,
+        args: args || '-p json .name',
         version: null
     }
 
