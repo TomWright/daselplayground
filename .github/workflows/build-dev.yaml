@@ -8,7 +8,7 @@ jobs:
   publish:
     strategy:
       matrix:
-        go-version: [1.15.x]
+        go-version: [1.18.x]
         os:
           - ubuntu-latest
     name: Docker Build
@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
-          go-version: '^1.15.0' # The Go version to download (if necessary) and use.
+          go-version: '^1.18.0' # The Go version to download (if necessary) and use.
       - name: Build docker image
         run: docker build -t tomwright/daselplayground:latest .
       - name: Docker login
