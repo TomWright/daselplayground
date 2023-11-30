@@ -16,7 +16,7 @@
     export let snippet = {
         id: null,
         input: input || `{\n  "name": "Tom"\n}`,
-        args: args || '-p json .name',
+        args: args || '-r json .name',
         version: null
     }
 
@@ -267,9 +267,9 @@
         <div id="arguments-help" class="notes" class:visible={argumentsHelpVisible}>
             <p>Use quotes only if the input value contains a space or a quote:</p>
             <ul>
-                <li>put string -p json .text value</li>
-                <li>put string -p json .text 'Toms value'</li>
-                <li>put string -p json .text "Tom's value"</li>
+                <li>put string -r json .text value</li>
+                <li>put string -r json .text 'Toms value'</li>
+                <li>put string -r json .text "Tom's value"</li>
             </ul>
             <p>Including quotes outside of this context may provide unexpected results. Escaping characters is not
                 supported.</p>
